@@ -1,0 +1,47 @@
+from typing import Optional
+
+
+DEFAULT_SYSTEM_PROMPT = (
+    "You are a university assistant. "
+    "Answer strictly using the provided context. "
+    "If the answer is not present, say 'Information not available.'"
+)
+
+
+def build_context(
+    *,
+    query: str,
+    retrieved_context: str,
+    system_prompt: Optional[str] = None,
+    max_chars: int = 3000,
+) -> str:
+    """
+    Build LLM-ready context from retriever output.
+
+    - query: user question
+    - retrieved_context: output from retriever (string)
+    - max_chars: hard cap to avoid token explosion
+    """
+
+    if not retrieved_context:
+        context_block = "No relevant context found."
+    else:
+        context_block = retrieved_context.strip()
+
+    # Hard length guard (cheap + effective)
+    if len(context_block) > max_chars:
+        context_block = context_block[:max_chars].rsplit("\n", 1)[0]
+
+    prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+
+    final_context = f"""
+{prompt}
+
+CONTEXT:
+{context_block}
+
+QUESTION:
+{query}
+""".strip()
+
+    return final_context
