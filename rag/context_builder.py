@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Optional, Dict, List
 
 
 DEFAULT_SYSTEM_PROMPT = (
@@ -11,24 +11,27 @@ DEFAULT_SYSTEM_PROMPT = (
 def build_context(
     *,
     query: str,
-    retrieved_context: str,
+    retrieved: Dict,
     system_prompt: Optional[str] = None,
     max_chars: int = 3000,
-) -> str:
+) -> Dict:
     """
     Build LLM-ready context from retriever output.
 
-    - query: user question
-    - retrieved_context: output from retriever (string)
-    - max_chars: hard cap to avoid token explosion
+    retrieved = {
+        "context": str,
+        "sources": List[str]
+    }
     """
 
-    if not retrieved_context:
+    text = retrieved.get("context", "") if retrieved else ""
+    sources = retrieved.get("sources", []) if retrieved else []
+
+    if not text:
         context_block = "No relevant context found."
     else:
-        context_block = retrieved_context.strip()
+        context_block = text.strip()
 
-    # Hard length guard (cheap + effective)
     if len(context_block) > max_chars:
         context_block = context_block[:max_chars].rsplit("\n", 1)[0]
 
@@ -44,4 +47,7 @@ QUESTION:
 {query}
 """.strip()
 
-    return final_context
+    return {
+        "prompt": final_context,
+        "sources": sources,
+    }

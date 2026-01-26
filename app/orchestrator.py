@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass
+from rag.context_builder import build_context
 
 from core.routing import build_llm_router
 from intent.classifier import IntentClassifier

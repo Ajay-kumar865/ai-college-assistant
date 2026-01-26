@@ -21,3 +21,6 @@ sentence-transformers
 faiss-cpu
 pymupdf
 loguru
+fastapi
+uvicorn
+
