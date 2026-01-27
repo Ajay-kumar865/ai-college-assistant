@@ -26,8 +26,12 @@ class ChatRequest(BaseModel):
     timestamp: Optional[str] = None
 
 
+from typing import List
+
+
 class ChatResponse(BaseModel):
     response: str
+    sources: List[str] = []
 
 
 class FeedbackRequest(BaseModel):
@@ -47,8 +51,7 @@ def chat(req: ChatRequest):
 
     LAST_CHAT["query"] = req.message
     LAST_CHAT["response"] = result.text
-
-    return {"response": result.text}
+    return {"response": result.text, "sources": result.citations or []}
 
 
 # ---------------- FEEDBACK ENDPOINT ----------------

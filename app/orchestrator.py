@@ -80,6 +80,10 @@ def handle_query(user_query: str) -> Response:
             except Exception as e:
                 logger.error(f"RAG retrieval failed: {e}")
 
+        # Hide citations for general questions
+        if intent == "general_qa":
+            citations = []
+
         # 4. Prompt building
         prompt = prompt_builder.build_prompt(
             user_query=user_query,
@@ -96,12 +100,12 @@ def handle_query(user_query: str) -> Response:
         else:
             answer_text = str(llm_response)
 
-        # 6. Append citations (optional)
-        if citations:
-            answer_text += "\n\nSources:\n" + "\n".join(
-                f"- {c.replace('.txt', '').replace('_', ' ').title()}"
-                for c in citations
-            )
+        # # 6. Append citations (optional)
+        # if citations:
+        #     answer_text += "\n\nSources:\n" + "\n".join(
+        #         f"- {c.replace('.txt', '').replace('_', ' ').title()}"
+        #         for c in citations
+        #     )
 
     except Exception as e:
         logger.exception(f"handle_query failed: {e}")
