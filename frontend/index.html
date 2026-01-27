@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>AI Assistant</title>
+
+<!-- Markdown -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+  }
+
+  /* Floating bubble */
+  #ai-bubble {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: #0b5cff;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 22px;
+    z-index: 1000;
+  }
+
+  /* Chat box */
+  #ai-box {
+    position: fixed;
+    bottom: 90px;
+    right: 20px;
+    width: 340px;
+    height: 440px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.2);
+    display: none;
+    flex-direction: column;
+    z-index: 1000;
+  }
+
+  #ai-header {
+    padding: 10px;
+    background: #0b5cff;
+    color: white;
+    border-radius: 12px 12px 0 0;
+    font-weight: bold;
+  }
+
+  #ai-messages {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    font-size: 14px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #ai-input {
+    display: flex;
+    border-top: 1px solid #ddd;
+  }
+
+  #ai-input input {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    outline: none;
+  }
+
+  #ai-input button {
+    padding: 10px 15px;
+    border: none;
+    background: #0b5cff;
+    color: white;
+    cursor: pointer;
+  }
+
+  /* Message bubbles */
+  .msg {
+    max-width: 80%;
+    padding: 8px 10px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    word-wrap: break-word;
+  }
+
+  .msg.user {
+    background: #e6f0ff;
+    align-self: flex-end;
+    margin-left: auto;
+    font-weight: bold;
+  }
+
+  .msg.ai {
+    background: #f2f2f2;
+    align-self: flex-start;
+    margin-right: auto;
+  }
+
+  /* Feedback */
+  .feedback {
+    margin-top: 6px;
+  }
+
+  .feedback button {
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 16px;
+    margin-right: 8px;
+  }
+
+  .feedback-msg {
+    font-size: 12px;
+    color: green;
+    margin-top: 4px;
+  }
+
+  /* Typing indicator */
+  .loader span {
+    animation: blink 1.4s infinite both;
+    font-size: 18px;
+  }
+
+  .loader span:nth-child(2) { animation-delay: .2s; }
+  .loader span:nth-child(3) { animation-delay: .4s; }
+
+  @keyframes blink {
+    0% { opacity: .2; }
+    20% { opacity: 1; }
+    100% { opacity: .2; }
+  }
+
+  /* Mobile */
+  @media (max-width: 480px) {
+    #ai-box {
+      width: 92vw;
+      height: 60vh;
+      right: 4vw;
+    }
+  }
+</style>
+</head>
+
+<body>
+
+<!-- Floating bubble -->
+<div id="ai-bubble">🤖</div>
+
+<!-- Chat box -->
+<div id="ai-box">
+  <div id="ai-header">AI Assistant</div>
+  <div id="ai-messages"></div>
+
+  <div id="ai-input">
+    <input id="userInput" placeholder="Ask something..." />
+    <button onclick="sendMessage()">Send</button>
+  </div>
+</div>
+
+<script>
+  const bubble = document.getElementById("ai-bubble");
+  const box = document.getElementById("ai-box");
+  const messages = document.getElementById("ai-messages");
+  const input = document.getElementById("userInput");
+
+  let typingDiv = null;
+
+  bubble.onclick = () => {
+    box.style.display = box.style.display === "flex" ? "none" : "flex";
+  };
+
+  function addMessage(text, cls, markdown=false) {
+    const div = document.createElement("div");
+    div.className = "msg " + cls;
+    div.innerHTML = markdown ? marked.parse(text) : text;
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+    return div;
+  }
+
+  function showTyping() {
+    typingDiv = document.createElement("div");
+    typingDiv.className = "msg ai";
+    typingDiv.innerHTML = `
+      AI is thinking
+      <span class="loader">
+        <span>.</span><span>.</span><span>.</span>
+      </span>
+    `;
+    messages.appendChild(typingDiv);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function hideTyping() {
+    if (typingDiv) {
+      typingDiv.remove();
+      typingDiv = null;
+    }
+  }
+
+  function addFeedback() {
+    const div = document.createElement("div");
+    div.className = "feedback";
+
+    const msg = document.createElement("div");
+    msg.className = "feedback-msg";
+    msg.style.display = "none";
+    msg.innerText = "Feedback collected, thanks 🙏";
+
+    const likeBtn = document.createElement("button");
+    likeBtn.innerText = "👍";
+    likeBtn.onclick = () => handleFeedback("like", msg);
+
+    const dislikeBtn = document.createElement("button");
+    dislikeBtn.innerText = "👎";
+    dislikeBtn.onclick = () => handleFeedback("dislike", msg);
+
+    div.appendChild(likeBtn);
+    div.appendChild(dislikeBtn);
+    div.appendChild(msg);
+
+    messages.appendChild(div);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function handleFeedback(type, msgDiv) {
+    sendFeedback(type);
+    msgDiv.style.display = "block";
+
+    setTimeout(() => {
+      msgDiv.style.display = "none";
+    }, 6000);
+  }
+
+  function sendMessage() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    addMessage(text, "user");
+    input.value = "";
+
+    showTyping();
+
+    fetch("http://127.0.0.1:8000/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        message: text,
+        timestamp: new Date().toISOString()
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      hideTyping();
+      addMessage(data.response, "ai", true);
+      addFeedback();
+    })
+    .catch(() => {
+      hideTyping();
+      addMessage("Error connecting to server", "ai");
+    });
+  }
+
+  function sendFeedback(type) {
+    fetch("http://127.0.0.1:8000/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        feedbackType: type,
+        timestamp: new Date().toISOString()
+      })
+    });
+  }
+
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter") sendMessage();
+  });
+</script>
+
+</body>
+</html>

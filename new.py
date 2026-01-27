@@ -1,4 +1,8 @@
-from rag.retriever import retrieve
+from fastapi import FastAPI
 
-print(retrieve("hostel", top_k=2))
-print(retrieve("admission", top_k=2))
+app = FastAPI()
+
+
+@app.get("/ping")
+def ping():
+    return {"status": "ok"}

@@ -4,3 +4,7 @@ __pycache__/
 .env
 logs/
 storage/
+
+
+logs/*.log
+db/*.db
