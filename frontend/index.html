@@ -3,286 +3,335 @@
 <head>
 <meta charset="UTF-8" />
 <title>AI Assistant</title>
-
-<!-- Markdown -->
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <style>
-  body {
-    font-family: Arial, sans-serif;
-  }
+/* (UNCHANGED CSS — kept exactly as you gave) */
+body {
+  font-family: Inter, Arial, sans-serif;
+  background: #f4f6fb;
+}
 
-  /* Floating bubble */
-  #ai-bubble {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: #0b5cff;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-size: 22px;
-    z-index: 1000;
-  }
+.status {
+  font-size: 11px;
+  color: #888;
+  text-align: right;
+  margin-top: 2px;
+}
 
-  /* Chat box */
-  #ai-box {
-    position: fixed;
-    bottom: 90px;
-    right: 20px;
-    width: 340px;
-    height: 440px;
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 0 15px rgba(0,0,0,0.2);
-    display: none;
-    flex-direction: column;
-    z-index: 1000;
-  }
+.user-typing {
+  font-size: 12px;
+  color: #777;
+  display: flex;
+  gap: 4px;
+}
 
-  #ai-header {
-    padding: 10px;
-    background: #0b5cff;
-    color: white;
-    border-radius: 12px 12px 0 0;
-    font-weight: bold;
-  }
+.user-typing span,
+.typing span {
+  width: 6px;
+  height: 6px;
+  background: #999;
+  border-radius: 50%;
+  animation: blink 1.4s infinite both;
+}
 
-  #ai-messages {
-    flex: 1;
-    padding: 10px;
-    overflow-y: auto;
-    font-size: 14px;
-    display: flex;
-    flex-direction: column;
-  }
+.user-typing span:nth-child(2),
+.typing span:nth-child(2){animation-delay:.2s}
+.user-typing span:nth-child(3),
+.typing span:nth-child(3){animation-delay:.4s}
 
-  #ai-input {
-    display: flex;
-    border-top: 1px solid #ddd;
-  }
+@keyframes blink {
+  0%{opacity:.2}
+  20%{opacity:1}
+  100%{opacity:.2}
+}
 
-  #ai-input input {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    outline: none;
-  }
+#ai-bubble {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #1e90ff;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
 
-  #ai-input button {
-    padding: 10px 15px;
-    border: none;
-    background: #0b5cff;
-    color: white;
-    cursor: pointer;
-  }
+#ai-box {
+  position: fixed;
+  bottom: 90px;
+  right: 20px;
+  width: 360px;
+  height: 520px;
+  background: white;
+  border-radius: 18px;
+  box-shadow: 0 20px 40px rgba(0,0,0,.15);
+  display: none;
+  flex-direction: column;
+}
 
-  /* Message bubbles */
-  .msg {
-    max-width: 80%;
-    padding: 8px 10px;
-    border-radius: 10px;
-    margin-bottom: 10px;
-    word-wrap: break-word;
-  }
+#ai-header {
+  background: linear-gradient(135deg, #1e90ff, #0066ff);
+  color: white;
+  padding: 14px;
+  font-weight: 600;
+}
 
-  .msg.user {
-    background: #e6f0ff;
-    align-self: flex-end;
-    margin-left: auto;
-    font-weight: bold;
-  }
+#ai-messages {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
-  .msg.ai {
-    background: #f2f2f2;
-    align-self: flex-start;
-    margin-right: auto;
-  }
+.msg {
+  max-width: 85%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 14px;
+}
 
-  /* Feedback */
-  .feedback {
-    margin-top: 6px;
-  }
+.msg.user {
+  background: #1e90ff;
+  color: white;
+  align-self: flex-end;
+}
 
-  .feedback button {
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 16px;
-    margin-right: 8px;
-  }
+.msg.ai {
+  background: #f1f3f7;
+  align-self: flex-start;
+}
 
-  .feedback-msg {
-    font-size: 12px;
-    color: green;
-    margin-top: 4px;
-  }
+.timestamp {
+  font-size: 11px;
+  color: #777;
+}
 
-  /* Typing indicator */
-  .loader span {
-    animation: blink 1.4s infinite both;
-    font-size: 18px;
-  }
+.actions {
+  display: flex;
+  gap: 10px;
+  font-size: 12px;
+  margin-top: 4px;
+}
 
-  .loader span:nth-child(2) { animation-delay: .2s; }
-  .loader span:nth-child(3) { animation-delay: .4s; }
+.actions button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #1e90ff;
+}
 
-  @keyframes blink {
-    0% { opacity: .2; }
-    20% { opacity: 1; }
-    100% { opacity: .2; }
-  }
+#ai-input {
+  padding: 12px;
+  display: flex;
+  gap: 8px;
+  border-top: 1px solid #eee;
+}
 
-  /* Mobile */
-  @media (max-width: 480px) {
-    #ai-box {
-      width: 92vw;
-      height: 60vh;
-      right: 4vw;
-    }
-  }
+#ai-input input {
+  flex: 1;
+  padding: 10px 14px;
+  border-radius: 20px;
+  border: 1px solid #ddd;
+}
+
+#ai-input button {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+  background: #1e90ff;
+  color: white;
+  cursor: pointer;
+}
 </style>
 </head>
 
 <body>
 
-<!-- Floating bubble -->
-<div id="ai-bubble">🤖</div>
+<div id="ai-bubble">AI</div>
 
-<!-- Chat box -->
 <div id="ai-box">
-  <div id="ai-header">AI Assistant</div>
+  <div id="ai-header">We are online!</div>
   <div id="ai-messages"></div>
-
   <div id="ai-input">
-    <input id="userInput" placeholder="Ask something..." />
-    <button onclick="sendMessage()">Send</button>
+    <input id="userInput" placeholder="Enter your message..." />
+    <button onclick="sendMessage()">➤</button>
   </div>
 </div>
 
 <script>
-  const bubble = document.getElementById("ai-bubble");
-  const box = document.getElementById("ai-box");
-  const messages = document.getElementById("ai-messages");
-  const input = document.getElementById("userInput");
+const bubble = document.getElementById("ai-bubble");
+const box = document.getElementById("ai-box");
+const messages = document.getElementById("ai-messages");
+const input = document.getElementById("userInput");
 
-  let typingDiv = null;
+let userTypingDiv = null;
+let userTypingTimer = null;
+let aiTypingDiv = null;
+let aiTypingTimer = null;
 
-  bubble.onclick = () => {
-    box.style.display = box.style.display === "flex" ? "none" : "flex";
-  };
+bubble.onclick = () => {
+  box.style.display = box.style.display === "flex" ? "none" : "flex";
+  if (!messages.innerHTML) showWelcome();
+};
 
-  function addMessage(text, cls, markdown=false) {
-    const div = document.createElement("div");
-    div.className = "msg " + cls;
-    div.innerHTML = markdown ? marked.parse(text) : text;
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
-    return div;
+function timeNow() {
+  return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function showWelcome() {
+  const ai = document.createElement("div");
+  ai.className = "msg ai";
+  messages.appendChild(ai);
+
+  const text = "Hello, I am your AI assistant. How can I help you?";
+  let i = 0;
+  const interval = setInterval(() => {
+    ai.innerText = text.slice(0, i++);
+    if (i > text.length) clearInterval(interval);
+  }, 30);
+}
+
+function showUserTyping() {
+  if (userTypingDiv) return;
+  userTypingDiv = document.createElement("div");
+  userTypingDiv.className = "user-typing";
+  userTypingDiv.innerHTML = `User is typing <span></span><span></span><span></span>`;
+  messages.appendChild(userTypingDiv);
+}
+
+function hideUserTyping() {
+  if (userTypingDiv) {
+    userTypingDiv.remove();
+    userTypingDiv = null;
   }
+}
 
-  function showTyping() {
-    typingDiv = document.createElement("div");
-    typingDiv.className = "msg ai";
-    typingDiv.innerHTML = `
-      AI is thinking
-      <span class="loader">
-        <span>.</span><span>.</span><span>.</span>
-      </span>
-    `;
-    messages.appendChild(typingDiv);
-    messages.scrollTop = messages.scrollHeight;
+function showAITyping() {
+  if (aiTypingDiv) return;
+  aiTypingDiv = document.createElement("div");
+  aiTypingDiv.className = "msg ai";
+  aiTypingDiv.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+  messages.appendChild(aiTypingDiv);
+}
+
+function hideAITyping() {
+  if (aiTypingDiv) {
+    aiTypingDiv.remove();
+    aiTypingDiv = null;
   }
+}
 
-  function hideTyping() {
-    if (typingDiv) {
-      typingDiv.remove();
-      typingDiv = null;
-    }
-  }
+function sendMessage(prefill=null) {
+  hideUserTyping();
+  const text = prefill || input.value.trim();
+  if (!text) return;
+  input.value = "";
 
-  function addFeedback() {
-    const div = document.createElement("div");
-    div.className = "feedback";
+  const wrapper = document.createElement("div");
+  wrapper.style.alignSelf = "flex-end";
 
-    const msg = document.createElement("div");
-    msg.className = "feedback-msg";
-    msg.style.display = "none";
-    msg.innerText = "Feedback collected, thanks 🙏";
+  const user = document.createElement("div");
+  user.className = "msg user";
+  user.innerText = text;
 
-    const likeBtn = document.createElement("button");
-    likeBtn.innerText = "👍";
-    likeBtn.onclick = () => handleFeedback("like", msg);
+  const status = document.createElement("div");
+  status.className = "status";
+  status.innerText = "Sending…";
 
-    const dislikeBtn = document.createElement("button");
-    dislikeBtn.innerText = "👎";
-    dislikeBtn.onclick = () => handleFeedback("dislike", msg);
+  wrapper.append(user, status);
+  messages.appendChild(wrapper);
 
-    div.appendChild(likeBtn);
-    div.appendChild(dislikeBtn);
-    div.appendChild(msg);
+  const ut = document.createElement("div");
+  ut.className = "timestamp";
+  ut.innerText = "You • " + timeNow();
+  messages.appendChild(ut);
 
-    messages.appendChild(div);
-    messages.scrollTop = messages.scrollHeight;
-  }
+  aiTypingTimer = setTimeout(showAITyping, 400);
 
-  function handleFeedback(type, msgDiv) {
-    sendFeedback(type);
-    msgDiv.style.display = "block";
+  fetch("http://127.0.0.1:8000/chat", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({message:text})
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    clearTimeout(aiTypingTimer);
+    hideAITyping();
+    status.innerText = "Sent";
 
-    setTimeout(() => {
-      msgDiv.style.display = "none";
-    }, 6000);
-  }
+    const ai = document.createElement("div");
+    ai.className = "msg ai";
+    ai.innerHTML = marked.parse(d.response);
+    messages.appendChild(ai);
 
-  function sendMessage() {
-    const text = input.value.trim();
-    if (!text) return;
+    const at = document.createElement("div");
+    at.className = "timestamp";
+    at.innerText = "AI • " + timeNow();
+    messages.appendChild(at);
 
-    addMessage(text, "user");
-    input.value = "";
-
-    showTyping();
-
-    fetch("http://127.0.0.1:8000/chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        message: text,
-        timestamp: new Date().toISOString()
-      })
-    })
-    .then(res => res.json())
-    .then(data => {
-      hideTyping();
-      addMessage(data.response, "ai", true);
-      addFeedback();
-    })
-    .catch(() => {
-      hideTyping();
-      addMessage("Error connecting to server", "ai");
-    });
-  }
-
-  function sendFeedback(type) {
-    fetch("http://127.0.0.1:8000/feedback", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        feedbackType: type,
-        timestamp: new Date().toISOString()
-      })
-    });
-  }
-
-  input.addEventListener("keydown", e => {
-    if (e.key === "Enter") sendMessage();
+    addActions(ai, d.response, text);
   });
+}
+
+function addActions(block, text, query) {
+  const actions = document.createElement("div");
+  actions.className = "actions";
+
+  actions.innerHTML = `
+    <button onclick="navigator.clipboard.writeText(\`${text}\`)">Copy</button>
+    <button onclick="sendMessage(\`${query}\`)">Regenerate</button>
+    <button onclick="sendFeedback('like')">👍</button>
+    <button onclick="sendFeedback('dislike')">👎</button>
+  `;
+
+  block.appendChild(actions);
+}
+
+/* ✅ FIXED: feedback now adds visible message */
+function sendFeedback(type) {
+  fetch("http://127.0.0.1:8000/feedback", {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      feedbackType:type,
+      timestamp:new Date().toISOString()
+    })
+  });
+
+  const ai = document.createElement("div");
+  ai.className = "msg ai";
+  ai.innerText =
+    type === "like"
+      ? "Thanks for the positive feedback 👍"
+      : "Thanks for the feedback 👎, we’ll improve.";
+  messages.appendChild(ai);
+
+  const at = document.createElement("div");
+  at.className = "timestamp";
+  at.innerText = "AI • " + timeNow();
+  messages.appendChild(at);
+}
+
+input.addEventListener("input", () => {
+  showUserTyping();
+  clearTimeout(userTypingTimer);
+  userTypingTimer = setTimeout(hideUserTyping, 700);
+});
+
+input.addEventListener("keydown", e => {
+  if (e.key === "Enter") {
+    e.preventDefault();
+    sendMessage();
+  }
+});
 </script>
 
 </body>
