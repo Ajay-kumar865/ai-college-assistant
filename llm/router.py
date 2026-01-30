@@ -21,7 +21,7 @@ class LLMRouter:
     def __init__(self, providers: dict):
         self.providers = providers
         self.executor = LLMExecutor()  # kept for future use
-        self.disabled = {}
+        self.disabled = set()  # Fixed: changed from dict to set
 
     def generate(self, prompt: str, context=None):
         last_error = None

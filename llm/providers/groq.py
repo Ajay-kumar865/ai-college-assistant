@@ -35,7 +35,9 @@ class GroqProvider:
             return LLMResponse(
                 provider="groq",
                 model=data.get("model", "mixtral-8x7b-32768"),
-                content=data["choices"][0]["message"]["content"],
+                text=data["choices"][0]["message"][
+                    "content"
+                ],  # Fixed: changed content to text
             )
 
         except requests.HTTPError as e:

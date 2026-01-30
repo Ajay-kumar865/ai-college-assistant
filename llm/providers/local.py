@@ -19,6 +19,7 @@ class LocalProvider:
 
         r.raise_for_status()
         return LLMResponse(
-            content=r.json()["response"],
+            text=r.json()["response"],
             model="local",
+            provider="local",
         )

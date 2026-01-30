@@ -29,15 +29,12 @@ LOG_DIR.mkdir(exist_ok=True)
 # =========================
 # Ordered by priority (fallback handled by orchestration later)
 FREE_LLM_PRIORITY = [
-    "gemini",
     "groq",
-    
-     
+    "gemini",
     # "huggingface",
     # "local"
 ]
-PAID_LLM_PRIORITY = [
-]
+PAID_LLM_PRIORITY = []
 
 # =========================
 # Retrieval Defaults
@@ -50,18 +47,14 @@ MAX_CONTEXT_TOKENS: int = 4096
 # =========================
 ENABLE_RAG: bool = True
 ENABLE_TOOLS: bool = True
-ENABLE_VOICE: bool = False   # planned, not implemented
+ENABLE_VOICE: bool = False  # planned, not implemented
 # app/config.py
-
 
 
 def load_api_keys(env_name: str) -> list[str]:
     raw = os.getenv(env_name, "")
     return [k.strip() for k in raw.split(",") if k.strip()]
 
+
 GROQ_API_KEYS = load_api_keys("GROQ_API_KEYS")
 GEMINI_API_KEYS = load_api_keys("GEMINI_API_KEYS")
-
-
-
-

@@ -1,14 +1,21 @@
+# app/api.py
+
 from fastapi import FastAPI, APIRouter
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.concurrency import run_in_threadpool
 from pydantic import BaseModel
-from typing import Optional
+from typing import List, Optional
+from datetime import datetime
+import json
 
-LAST_CHAT = {}
+# ---- internal imports ----
+from app.orchestrator import handle_query
+from logs.log_setup import Log_Setup
 
-# ---------------- FASTAPI APP ----------------
+# ---- app init ----
 app = FastAPI(title="AI College Assistant API")
 
-# CORS (HTML frontend support)
+# ---- CORS (frontend needs this) ----
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -17,16 +24,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# ---- logging ----
+logger_setup = Log_Setup()
+logger_setup.setup_logging()
+feedback_logger = logger_setup.feedback_logger
+
+# ---- state (temporary, OK for now) ----
+LAST_CHAT = {}
+
+# ---- router ----
 router = APIRouter()
 
 
-# ---------------- MODELS ----------------
+# =========================
+# Models
+# =========================
+
+
 class ChatRequest(BaseModel):
     message: str
     timestamp: Optional[str] = None
-
-
-from typing import List
 
 
 class ChatResponse(BaseModel):
@@ -36,38 +53,39 @@ class ChatResponse(BaseModel):
 
 class FeedbackRequest(BaseModel):
     feedbackType: str
-    timestamp: str
+    timestamp: Optional[str] = None
 
 
-# ---------------- CHAT ENDPOINT ----------------
-
-
-from app.orchestrator import handle_query
+# =========================
+# Routes
+# =========================
 
 
 @router.post("/chat", response_model=ChatResponse)
-def chat(req: ChatRequest):
-    result = handle_query(req.message)
+async def chat(req: ChatRequest):
+    """
+    Main chat endpoint.
+    Runs heavy LLM + RAG logic in threadpool to avoid blocking.
+    """
+
+    result = await run_in_threadpool(handle_query, req.message)
 
     LAST_CHAT["query"] = req.message
     LAST_CHAT["response"] = result.text
-    return {"response": result.text, "sources": result.citations or []}
 
-
-# ---------------- FEEDBACK ENDPOINT ----------------
-import json
-from datetime import datetime
-from logs.log_setup import Log_Setup
-
-logger = Log_Setup()
-logger.setup_logging()
-feedback_logger = logger.feedback_logger
+    return {
+        "response": result.text,
+        "sources": result.citations or [],
+    }
 
 
 @router.post("/feedback")
 def feedback(req: FeedbackRequest):
+    """
+    Stores feedback for last chat response.
+    """
     entry = {
-        "timestamp": datetime.utcnow().isoformat(),
+        "timestamp": req.timestamp or datetime.utcnow().isoformat(),
         "query": LAST_CHAT.get("query"),
         "response": LAST_CHAT.get("response"),
         "feedback": req.feedbackType,
@@ -77,5 +95,10 @@ def feedback(req: FeedbackRequest):
     return {"status": "logged"}
 
 
-# ---------------- REGISTER ROUTES ----------------
+@router.get("/")
+def health():
+    return {"status": "AI backend running"}
+
+
+# ---- mount router ----
 app.include_router(router)
