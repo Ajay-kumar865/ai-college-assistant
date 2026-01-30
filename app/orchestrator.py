@@ -25,8 +25,8 @@ TOOL_INTENTS = {
     "document",
 }
 
+# FIXED: Removed general_qa from RAG_INTENTS - it doesn't need context retrieval
 RAG_INTENTS = {
-    "general_qa",
     "admission",
     "hostel",
     "event",
@@ -43,13 +43,20 @@ class Response:
     citations: list[str] | None = None
 
 
+# FIXED: Expanded fast intents - these should NEVER trigger RAG
+FAST_INTENTS = {
+    "general_qa",
+    "chitchat",
+}
+
+
 def handle_query(user_query: str) -> Response:
     intent = "general_qa"
     confidence = 0.0
     tool_output = ""
     context = ""
     citations = []
-    answer_text = "Sorry, I’m unable to answer that right now."
+    answer_text = "Sorry, I'm unable to answer that right now."
 
     try:
         # 1. Intent classification
@@ -71,14 +78,30 @@ def handle_query(user_query: str) -> Response:
                 except Exception as e:
                     logger.error(f"Tool execution failed: {e}")
 
-        # 3. RAG retrieval
-        if intent in RAG_INTENTS:
+        # 3. RAG retrieval - OPTIMIZED: Only for knowledge-intensive queries
+        # FIXED: This is the MAIN LATENCY FIX
+        should_use_rag = (
+            intent in RAG_INTENTS  # Only domain-specific intents
+            and intent not in FAST_INTENTS  # Never for chitchat/general_qa
+            and len(user_query.strip()) > 10  # Skip very short queries like "hi"
+        )
+
+        if should_use_rag:
             try:
+                logger.info(f"[PERF] Running RAG retrieval for intent={intent}")
                 rag_result = rag_retrieve(user_query)
                 context = rag_result.get("context", "")
                 citations = rag_result.get("sources", [])
             except Exception as e:
                 logger.error(f"RAG retrieval failed: {e}")
+                context = ""
+                citations = []
+        else:
+            logger.info(
+                f"[PERF] Skipping RAG for intent={intent}, query_len={len(user_query)}"
+            )
+            context = ""
+            citations = []
 
         # Hide citations for general questions
         if intent == "general_qa":
@@ -100,12 +123,11 @@ def handle_query(user_query: str) -> Response:
         else:
             answer_text = str(llm_response)
 
-        # # 6. Append citations (optional)
-        # if citations:
-        #     answer_text += "\n\nSources:\n" + "\n".join(
-        #         f"- {c.replace('.txt', '').replace('_', ' ').title()}"
-        #         for c in citations
-        #     )
+    except RuntimeError as e:
+        logger.error(f"LLM routing failed: {e}")
+        answer_text = "LLM temporarily unavailable. Please try again."
+        intent = intent
+        confidence = confidence
 
     except Exception as e:
         logger.exception(f"handle_query failed: {e}")

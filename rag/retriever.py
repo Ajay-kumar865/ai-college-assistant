@@ -51,8 +51,7 @@ class RAGRetriever:
         sources = list({r.get("source") for r in results if r.get("source")})
 
         return context, sources
-
-        return self._format_results(results, source="BM25")
+        # FIXED: Removed duplicate/dead return statement that was on line 55
 
     def _vector_retrieve(self, query: str, top_k: int) -> str:
         if self.vector_store is None:

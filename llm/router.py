@@ -9,9 +9,6 @@ from llm.providers.base_exception import (
     LLMTransientError,
     InvalidRequestError,
 )
-from rag.retriever import retrieve
-from rag.context_builder import build_context
-
 
 # Router logs are QUERY logs in your architecture
 logger = logging.getLogger("queries")
@@ -67,21 +64,3 @@ class LLMRouter:
                 last_error = e
 
         raise RuntimeError("No LLM provider available") from last_error
-
-    def answer(self, query: str, top_k: int = 3):
-        """
-        Direct RAG flow:
-        retriever → context_builder → LLM execution
-        """
-
-        # 1. Retrieve knowledge (BM25 / Vector / Hybrid)
-        retrieved_context = retrieve(query, top_k=top_k)
-
-        # 2. Build LLM-ready prompt
-        prompt = build_context(
-            query=query,
-            retrieved_context=retrieved_context,
-        )
-
-        # 3. Generate response via existing routing logic
-        return self.generate(prompt=prompt)

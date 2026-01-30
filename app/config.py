@@ -29,8 +29,8 @@ LOG_DIR.mkdir(exist_ok=True)
 # =========================
 # Ordered by priority (fallback handled by orchestration later)
 FREE_LLM_PRIORITY = [
-    "groq",
     "gemini",
+    "groq",
     # "huggingface",
     # "local"
 ]
