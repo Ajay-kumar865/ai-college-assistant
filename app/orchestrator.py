@@ -131,6 +131,15 @@ def handle_query(user_query: str) -> Response:
 
     except Exception as e:
         logger.exception(f"handle_query failed: {e}")
+    from logs.db_logger import log_query
+
+    log_query(
+        {
+            "query": user_query,
+            "intent": intent,
+            "confidence": confidence,
+        }
+    )
 
     # 🔒 GUARANTEED RETURN — NO EXCEPTIONS
     return Response(

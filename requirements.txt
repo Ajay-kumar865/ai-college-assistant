@@ -23,4 +23,5 @@ pymupdf
 loguru
 fastapi
 uvicorn
-
+ "pymongo[srv]"
+google-genai

@@ -22,6 +22,13 @@ class LLMExecutor:
             raise RuntimeError(f"No key pool registered for provider: {provider_name}")
 
         # ✅ FINAL response logging (single source of truth)
-        logger.info({"provider": provider_name, "response": result})
+        from logs.db_logger import log_response
+
+        log_response(
+            {
+                "provider": provider_name,
+                "response": str(result),
+            }
+        )
 
         return result

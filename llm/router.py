@@ -53,6 +53,8 @@ class LLMRouter:
             except LLMTransientError as e:
                 logger.warning(f"[ROUTER] {name} transient error: {e}")
                 last_error = e
+                if name != "gemini":
+                    self.disabled.add(name)
                 continue
 
             except InvalidRequestError:
