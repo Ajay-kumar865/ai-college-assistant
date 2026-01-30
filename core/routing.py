@@ -19,7 +19,7 @@ def build_llm_router() -> LLMRouter:
     providers = {
         "gemini": GeminiProvider,
         "groq": GroqProvider,
-        "local": LocalProvider,  # may fail if Ollama not running
+        # # may fail if Ollama not running
         # "openai": OpenAIProvider(),   # paid fallback
     }
 

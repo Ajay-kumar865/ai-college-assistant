@@ -19,13 +19,9 @@ class LLMExecutor:
         if provider_name in self.key_pools:
             result = self.key_pools[provider_name].execute(prompt, context)
         else:
-            # fallback: providers without keys (local, etc.)
-            result = provider.generate(prompt, context)
+            raise RuntimeError(f"No key pool registered for provider: {provider_name}")
 
         # ✅ FINAL response logging (single source of truth)
-        logger.info({
-            "provider": provider_name,
-            "response": result
-        })
+        logger.info({"provider": provider_name, "response": result})
 
         return result
