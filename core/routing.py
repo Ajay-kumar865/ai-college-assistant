@@ -1,6 +1,7 @@
 # core/routing.py
 
 from llm.router import LLMRouter
+from llm.providers.Goose import GooseProvider
 
 from llm.providers.gemini import GeminiProvider
 from llm.providers.groq import GroqProvider
@@ -19,6 +20,7 @@ def build_llm_router() -> LLMRouter:
     providers = {
         "gemini": GeminiProvider,
         "groq": GroqProvider,
+        "goose": GooseProvider,
         # # may fail if Ollama not running
         # "openai": OpenAIProvider(),   # paid fallback
     }

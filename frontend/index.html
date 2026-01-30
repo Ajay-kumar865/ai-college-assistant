@@ -2,166 +2,436 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>AI Assistant</title>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
 <style>
-/* (UNCHANGED CSS — kept exactly as you gave) */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
-  font-family: Inter, Arial, sans-serif;
-  background: #f4f6fb;
+  font-family: 'Segoe UI', Inter, Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+/* Floating background animation */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: float 20s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes float {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(50px, 50px); }
 }
 
 .status {
   font-size: 11px;
-  color: #888;
+  color: #999;
   text-align: right;
-  margin-top: 2px;
+  margin-top: 4px;
+  opacity: 0;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+@keyframes fadeIn {
+  to { opacity: 1; }
 }
 
 .user-typing {
   font-size: 12px;
   color: #777;
   display: flex;
-  gap: 4px;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 12px;
+  align-self: flex-start;
+  animation: slideInLeft 0.3s ease;
 }
 
 .user-typing span,
 .typing span {
-  width: 6px;
-  height: 6px;
-  background: #999;
+  width: 8px;
+  height: 8px;
+  background: #667eea;
   border-radius: 50%;
   animation: blink 1.4s infinite both;
 }
 
 .user-typing span:nth-child(2),
-.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(2) { animation-delay: 0.2s; }
 .user-typing span:nth-child(3),
-.typing span:nth-child(3){animation-delay:.4s}
+.typing span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes blink {
-  0%{opacity:.2}
-  20%{opacity:1}
-  100%{opacity:.2}
+  0%, 100% { transform: scale(0.8); opacity: 0.3; }
+  50% { transform: scale(1.2); opacity: 1; }
 }
 
 #ai-bubble {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 56px;
-  height: 56px;
+  bottom: 24px;
+  right: 24px;
+  width: 64px;
+  height: 64px;
   border-radius: 50%;
-  background: #1e90ff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  font-weight: 700;
+  font-size: 18px;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4);
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  z-index: 1000;
+}
+
+#ai-bubble:hover {
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 12px 48px rgba(102, 126, 234, 0.6);
+}
+
+#ai-bubble:active {
+  transform: scale(0.95);
+}
+
+#ai-bubble.pulse {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4); }
+  50% { box-shadow: 0 8px 32px rgba(102, 126, 234, 0.8), 0 0 0 12px rgba(102, 126, 234, 0.1); }
 }
 
 #ai-box {
   position: fixed;
-  bottom: 90px;
-  right: 20px;
-  width: 360px;
-  height: 520px;
+  bottom: 100px;
+  right: 24px;
+  width: 400px;
+  height: 600px;
   background: white;
-  border-radius: 18px;
-  box-shadow: 0 20px 40px rgba(0,0,0,.15);
+  border-radius: 24px;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.2);
   display: none;
   flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  z-index: 999;
+}
+
+#ai-box.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
 }
 
 #ai-header {
-  background: linear-gradient(135deg, #1e90ff, #0066ff);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 14px;
+  padding: 20px;
   font-weight: 600;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#ai-header::before {
+  content: '🤖';
+  font-size: 24px;
+  animation: wave 2s infinite;
+}
+
+@keyframes wave {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(20deg); }
+  75% { transform: rotate(-20deg); }
 }
 
 #ai-messages {
   flex: 1;
-  padding: 16px;
+  padding: 20px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  background: linear-gradient(to bottom, #f8f9fa 0%, #ffffff 100%);
+  scroll-behavior: smooth;
+}
+
+#ai-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+#ai-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+#ai-messages::-webkit-scrollbar-thumb {
+  background: #ddd;
+  border-radius: 10px;
+}
+
+#ai-messages::-webkit-scrollbar-thumb:hover {
+  background: #bbb;
 }
 
 .msg {
-  max-width: 85%;
-  padding: 10px 12px;
-  border-radius: 14px;
+  max-width: 80%;
+  padding: 12px 16px;
+  border-radius: 18px;
   font-size: 14px;
+  line-height: 1.5;
+  opacity: 0;
+  animation: messageSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+  position: relative;
+}
+
+@keyframes messageSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideInRight {
+  0% {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .msg.user {
-  background: #1e90ff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   align-self: flex-end;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .msg.ai {
-  background: #f1f3f7;
+  background: linear-gradient(135deg, #f1f3f7 0%, #e8eaf0 100%);
+  color: #2d3748;
   align-self: flex-start;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.msg.ai code {
+  background: rgba(102, 126, 234, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Courier New', monospace;
+  font-size: 13px;
+}
+
+.msg.ai pre {
+  background: #2d3748;
+  color: #fff;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  margin: 8px 0;
 }
 
 .timestamp {
   font-size: 11px;
-  color: #777;
+  color: #999;
+  margin-top: 4px;
+  opacity: 0;
+  animation: fadeIn 0.3s ease 0.2s forwards;
 }
 
 .actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   font-size: 12px;
-  margin-top: 4px;
+  margin-top: 8px;
+  opacity: 0;
+  animation: fadeIn 0.3s ease 0.4s forwards;
 }
 
 .actions button {
   border: none;
-  background: none;
+  background: rgba(102, 126, 234, 0.1);
   cursor: pointer;
-  color: #1e90ff;
+  color: #667eea;
+  padding: 6px 12px;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  font-weight: 500;
+}
+
+.actions button:hover {
+  background: rgba(102, 126, 234, 0.2);
+  transform: translateY(-2px);
+}
+
+.actions button:active {
+  transform: translateY(0);
 }
 
 #ai-input {
-  padding: 12px;
+  padding: 16px 20px;
   display: flex;
-  gap: 8px;
-  border-top: 1px solid #eee;
+  gap: 12px;
+  border-top: 1px solid #e8eaf0;
+  background: white;
+  align-items: center;
 }
 
 #ai-input input {
   flex: 1;
-  padding: 10px 14px;
-  border-radius: 20px;
-  border: 1px solid #ddd;
+  padding: 12px 18px;
+  border-radius: 24px;
+  border: 2px solid #e8eaf0;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  outline: none;
+}
+
+#ai-input input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
 }
 
 #ai-input button {
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: none;
-  background: #1e90ff;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
   cursor: pointer;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+#ai-input button:hover {
+  transform: scale(1.1) rotate(10deg);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
+}
+
+#ai-input button:active {
+  transform: scale(0.95);
+}
+
+#ai-input button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.typing {
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  #ai-box {
+    width: calc(100vw - 32px);
+    height: calc(100vh - 140px);
+    right: 16px;
+    bottom: 90px;
+  }
+}
+
+/* Welcome message animation */
+.welcome-typing {
+  animation: typing 0.03s steps(1) forwards;
+}
+
+/* Copy notification */
+.copy-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  background: #667eea;
+  color: white;
+  padding: 12px 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  z-index: 10000;
+  animation: slideInFromTop 0.3s ease, slideOutToTop 0.3s ease 2s;
+}
+
+@keyframes slideInFromTop {
+  from {
+    transform: translateY(-100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToTop {
+  to {
+    transform: translateY(-100px);
+    opacity: 0;
+  }
 }
 </style>
 </head>
 
 <body>
 
-<div id="ai-bubble">AI</div>
+<div id="ai-bubble" class="pulse">AI</div>
 
 <div id="ai-box">
-  <div id="ai-header">We are online!</div>
+  <div id="ai-header">
+    <span>AI Assistant</span>
+  </div>
   <div id="ai-messages"></div>
   <div id="ai-input">
-    <input id="userInput" placeholder="Enter your message..." />
+    <input id="userInput" placeholder="Type your message..." />
     <button onclick="sendMessage()">➤</button>
   </div>
 </div>
@@ -176,14 +446,32 @@ let userTypingDiv = null;
 let userTypingTimer = null;
 let aiTypingDiv = null;
 let aiTypingTimer = null;
+let isOpen = false;
 
 bubble.onclick = () => {
-  box.style.display = box.style.display === "flex" ? "none" : "flex";
-  if (!messages.innerHTML) showWelcome();
+  isOpen = !isOpen;
+  if (isOpen) {
+    box.style.display = "flex";
+    setTimeout(() => {
+      box.classList.add("show");
+      bubble.classList.remove("pulse");
+    }, 10);
+    if (!messages.innerHTML) showWelcome();
+  } else {
+    box.classList.remove("show");
+    setTimeout(() => {
+      box.style.display = "none";
+      bubble.classList.add("pulse");
+    }, 400);
+  }
 };
 
 function timeNow() {
   return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+function scrollToBottom() {
+  messages.scrollTop = messages.scrollHeight;
 }
 
 function showWelcome() {
@@ -191,11 +479,20 @@ function showWelcome() {
   ai.className = "msg ai";
   messages.appendChild(ai);
 
-  const text = "Hello, I am your AI assistant. How can I help you?";
+  const text = "Hello! 👋 I'm your AI assistant. How can I help you today?";
   let i = 0;
   const interval = setInterval(() => {
     ai.innerText = text.slice(0, i++);
-    if (i > text.length) clearInterval(interval);
+    scrollToBottom();
+    if (i > text.length) {
+      clearInterval(interval);
+      
+      const at = document.createElement("div");
+      at.className = "timestamp";
+      at.innerText = "AI • " + timeNow();
+      messages.appendChild(at);
+      scrollToBottom();
+    }
   }, 30);
 }
 
@@ -203,14 +500,18 @@ function showUserTyping() {
   if (userTypingDiv) return;
   userTypingDiv = document.createElement("div");
   userTypingDiv.className = "user-typing";
-  userTypingDiv.innerHTML = `User is typing <span></span><span></span><span></span>`;
+  userTypingDiv.innerHTML = `Typing<span></span><span></span><span></span>`;
   messages.appendChild(userTypingDiv);
+  scrollToBottom();
 }
 
 function hideUserTyping() {
   if (userTypingDiv) {
-    userTypingDiv.remove();
-    userTypingDiv = null;
+    userTypingDiv.style.animation = "slideInLeft 0.3s ease reverse";
+    setTimeout(() => {
+      userTypingDiv?.remove();
+      userTypingDiv = null;
+    }, 300);
   }
 }
 
@@ -220,13 +521,28 @@ function showAITyping() {
   aiTypingDiv.className = "msg ai";
   aiTypingDiv.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
   messages.appendChild(aiTypingDiv);
+  scrollToBottom();
 }
 
 function hideAITyping() {
   if (aiTypingDiv) {
-    aiTypingDiv.remove();
-    aiTypingDiv = null;
+    aiTypingDiv.style.animation = "messageSlideIn 0.3s ease reverse";
+    setTimeout(() => {
+      aiTypingDiv?.remove();
+      aiTypingDiv = null;
+    }, 300);
   }
+}
+
+function showNotification(text) {
+  const notification = document.createElement("div");
+  notification.className = "copy-notification";
+  notification.innerText = text;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.remove();
+  }, 2300);
 }
 
 function sendMessage(prefill=null) {
@@ -237,6 +553,10 @@ function sendMessage(prefill=null) {
 
   const wrapper = document.createElement("div");
   wrapper.style.alignSelf = "flex-end";
+  wrapper.style.width = "100%";
+  wrapper.style.display = "flex";
+  wrapper.style.flexDirection = "column";
+  wrapper.style.alignItems = "flex-end";
 
   const user = document.createElement("div");
   user.className = "msg user";
@@ -248,11 +568,14 @@ function sendMessage(prefill=null) {
 
   wrapper.append(user, status);
   messages.appendChild(wrapper);
+  scrollToBottom();
 
   const ut = document.createElement("div");
   ut.className = "timestamp";
   ut.innerText = "You • " + timeNow();
+  ut.style.textAlign = "right";
   messages.appendChild(ut);
+  scrollToBottom();
 
   aiTypingTimer = setTimeout(showAITyping, 400);
 
@@ -265,7 +588,8 @@ function sendMessage(prefill=null) {
   .then(d=>{
     clearTimeout(aiTypingTimer);
     hideAITyping();
-    status.innerText = "Sent";
+    status.innerText = "Sent ✓";
+    status.style.color = "#667eea";
 
     const ai = document.createElement("div");
     ai.className = "msg ai";
@@ -278,6 +602,21 @@ function sendMessage(prefill=null) {
     messages.appendChild(at);
 
     addActions(ai, d.response, text);
+    scrollToBottom();
+  })
+  .catch(err => {
+    clearTimeout(aiTypingTimer);
+    hideAITyping();
+    status.innerText = "Failed ✗";
+    status.style.color = "#e53e3e";
+    
+    const errorMsg = document.createElement("div");
+    errorMsg.className = "msg ai";
+    errorMsg.innerText = "Sorry, I couldn't process your message. Please try again.";
+    errorMsg.style.background = "linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%)";
+    errorMsg.style.color = "#742a2a";
+    messages.appendChild(errorMsg);
+    scrollToBottom();
   });
 }
 
@@ -285,18 +624,30 @@ function addActions(block, text, query) {
   const actions = document.createElement("div");
   actions.className = "actions";
 
-  actions.innerHTML = `
-    <button onclick="navigator.clipboard.writeText(\`${text}\`)">Copy</button>
-    <button onclick="sendMessage(\`${query}\`)">Regenerate</button>
-    <button onclick="sendFeedback('like')">👍</button>
-    <button onclick="sendFeedback('dislike')">👎</button>
-  `;
+  const copyBtn = document.createElement("button");
+  copyBtn.innerText = "📋 Copy";
+  copyBtn.onclick = () => {
+    navigator.clipboard.writeText(text);
+    showNotification("Copied to clipboard! ✓");
+  };
 
+  const regenBtn = document.createElement("button");
+  regenBtn.innerText = "🔄 Regenerate";
+  regenBtn.onclick = () => sendMessage(query);
+
+  const likeBtn = document.createElement("button");
+  likeBtn.innerText = "👍";
+  likeBtn.onclick = () => sendFeedback('like', likeBtn);
+
+  const dislikeBtn = document.createElement("button");
+  dislikeBtn.innerText = "👎";
+  dislikeBtn.onclick = () => sendFeedback('dislike', dislikeBtn);
+
+  actions.append(copyBtn, regenBtn, likeBtn, dislikeBtn);
   block.appendChild(actions);
 }
 
-/* ✅ FIXED: feedback now adds visible message */
-function sendFeedback(type) {
+function sendFeedback(type, button) {
   fetch("http://127.0.0.1:8000/feedback", {
     method:"POST",
     headers:{"Content-Type":"application/json"},
@@ -306,18 +657,28 @@ function sendFeedback(type) {
     })
   });
 
+  button.style.transform = "scale(1.3)";
+  button.style.background = type === "like" 
+    ? "rgba(72, 187, 120, 0.2)" 
+    : "rgba(245, 101, 101, 0.2)";
+  
+  setTimeout(() => {
+    button.style.transform = "scale(1)";
+  }, 300);
+
   const ai = document.createElement("div");
   ai.className = "msg ai";
-  ai.innerText =
-    type === "like"
-      ? "Thanks for the positive feedback 👍"
-      : "Thanks for the feedback 👎, we’ll improve.";
+  ai.innerText = type === "like"
+    ? "Thanks for the positive feedback! 💚"
+    : "Thanks for the feedback! We'll improve. 🔧";
   messages.appendChild(ai);
 
   const at = document.createElement("div");
   at.className = "timestamp";
   at.innerText = "AI • " + timeNow();
   messages.appendChild(at);
+  
+  scrollToBottom();
 }
 
 input.addEventListener("input", () => {
@@ -327,11 +688,19 @@ input.addEventListener("input", () => {
 });
 
 input.addEventListener("keydown", e => {
-  if (e.key === "Enter") {
+  if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
   }
 });
+
+// Focus input when box opens
+const observer = new MutationObserver(() => {
+  if (box.classList.contains('show')) {
+    setTimeout(() => input.focus(), 100);
+  }
+});
+observer.observe(box, { attributes: true, attributeFilter: ['class'] });
 </script>
 
 </body>

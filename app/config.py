@@ -29,8 +29,9 @@ LOG_DIR.mkdir(exist_ok=True)
 # =========================
 # Ordered by priority (fallback handled by orchestration later)
 FREE_LLM_PRIORITY = [
-    "gemini",
     "groq",
+    "gemini",
+    "goose",
     # "huggingface",
     # "local"
 ]
@@ -55,6 +56,8 @@ def load_api_keys(env_name: str) -> list[str]:
     raw = os.getenv(env_name, "")
     return [k.strip() for k in raw.split(",") if k.strip()]
 
+
+GOOSE_API_KEYS = load_api_keys("GOOSE_API_KEYS")
 
 GROQ_API_KEYS = load_api_keys("GROQ_API_KEYS")
 GEMINI_API_KEYS = load_api_keys("GEMINI_API_KEYS")

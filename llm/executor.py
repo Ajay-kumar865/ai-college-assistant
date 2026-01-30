@@ -6,6 +6,8 @@ logger = logging.getLogger("responses")
 from app.config import GROQ_API_KEYS, GEMINI_API_KEYS
 from llm.providers.groq import GroqProvider
 from llm.providers.gemini import GeminiProvider
+from app.config import GOOSE_API_KEYS
+from llm.providers.Goose import GooseProvider
 
 
 class LLMExecutor:
@@ -13,6 +15,7 @@ class LLMExecutor:
         self.key_pools = {
             "groq": KeyPoolExecutor(GroqProvider, GROQ_API_KEYS),
             "gemini": KeyPoolExecutor(GeminiProvider, GEMINI_API_KEYS),
+            "goose": KeyPoolExecutor(GooseProvider, GOOSE_API_KEYS),
         }
 
     def execute(self, provider_name: str, provider, prompt: str, context=None):
