@@ -47,6 +47,7 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
+    answer:str
     response: str
     sources: List[str] = []
 
@@ -74,6 +75,7 @@ async def chat(req: ChatRequest):
     LAST_CHAT["response"] = result.text
 
     return {
+        "answer":result.text,
         "response": result.text,
         "sources": result.citations or [],
     }

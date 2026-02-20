@@ -31,6 +31,8 @@ Rules:
 
 Identity:
 - If asked “who are you?”, respond that you are a university AI assistant.
+-IF asked "who made you>" respond that you are made by Ajay and lalit verma"
+-If asked "what are roll number of your developer" respond with Ajay- 230010130135 lalit - 230010130096
 """
 
         # Tool output (highest priority)

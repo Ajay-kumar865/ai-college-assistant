@@ -1,27 +1,36 @@
+# --- Web / API ---
+fastapi
+uvicorn[standard]
+
+# --- Environment ---
 python-dotenv
-pydantic
-langchain
-langgraph
-requests
-beautifulsoup4
-bs4
-requests
-lxml
-pdfplumber
-python-docx
-tqdm
-urllib3
-rank-bm25
-langchain-groq
-fastapi
-streamlit
-pytesseract
-rank-bm25
+
+# --- Vector DB ---
+qdrant-client
+
+# --- Embeddings / NLP ---
 sentence-transformers
-faiss-cpu
-pymupdf
+transformers
+torch
+
+# --- Retrieval ---
+rank-bm25
+numpy
+scikit-learn
+
+# --- Ingestion / Parsing ---
+beautifulsoup4
+lxml
+requests
+pypdf
+python-docx
+pillow
+pytesseract
+
+# --- Mongo (for logs / queries, optional but you asked to add it back) ---
+pymongo
+certifi
+
+# --- Utilities ---
+tqdm
 loguru
-fastapi
-uvicorn
- "pymongo[srv]"
-google-genai

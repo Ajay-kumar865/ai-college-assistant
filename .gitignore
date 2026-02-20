@@ -1,10 +1,15 @@
 venv/
+.venv/
+.venv 
 __pycache__/
 *.pyc
 .env
 logs/
 storage/
-
+__pycache__/
+*.pyc
+storage/*
+logs/*
 
 logs/*.log
 db/*.db

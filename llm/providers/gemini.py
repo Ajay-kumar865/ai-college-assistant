@@ -5,7 +5,7 @@ from llm.providers.base_exception import (
     LLMQuotaExceeded,
     LLMModelUnavailable,
 )
-from google import genai
+import google.generativeai as genai
 
 
 class GeminiProvider:
