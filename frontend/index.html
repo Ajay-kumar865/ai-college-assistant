@@ -437,6 +437,10 @@ body::before {
 </div>
 
 <script>
+// ────────────────────────────────────────────────
+//  Your JavaScript code (original version)
+// ────────────────────────────────────────────────
+
 const bubble = document.getElementById("ai-bubble");
 const box = document.getElementById("ai-box");
 const messages = document.getElementById("ai-messages");
@@ -449,7 +453,6 @@ let aiTypingTimer = null;
 let isOpen = false;
 
 bubble.onclick = (e) => {
-  
   e.stopPropagation();
   isOpen = !isOpen;
   if (isOpen) {
@@ -467,14 +470,19 @@ bubble.onclick = (e) => {
     }, 400);
   }
 };
-box.addEventListener("click", e => e.stopPropagation());
-// Close box when clicking outside — uses contains() instead of stopPropagation
-// so dynamically injected content (marked.parse output, action buttons) can't
-// accidentally break the guard after the first response is shown.
-document.addEventListener("click", (e) => {
-  if (isOpen && !box.contains(e.target) && !bubble.contains(e.target)) {
+
+// Close box when clicking outside
+document.addEventListener("mousedown", e => {
+  if (!isOpen) return;
+
+  const clickedInside =
+    e.target.closest("#ai-box") ||
+    e.target.closest("#ai-bubble");
+
+  if (!clickedInside) {
     isOpen = false;
     box.classList.remove("show");
+
     setTimeout(() => {
       box.style.display = "none";
       bubble.classList.add("pulse");
@@ -719,6 +727,7 @@ const observer = new MutationObserver(() => {
   }
 });
 observer.observe(box, { attributes: true, attributeFilter: ['class'] });
+
 </script>
 
 </body>

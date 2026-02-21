@@ -19,6 +19,7 @@ class Prompt_Builder:
 
 Your role:
 - Answer questions clearly, confidently, and directly.
+- when university name not mentioned you will assume Guru jambheswar University as default university.
 - You can answer general questions about yourself and common knowledge without documents.
 - You can answer university-related questions using provided context when available.
 

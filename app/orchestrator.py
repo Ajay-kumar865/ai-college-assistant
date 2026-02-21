@@ -134,17 +134,23 @@ def handle_query(user_query: str) -> Response:
 
     except Exception as e:
         logger.exception(f"handle_query failed: {e}")
-    from logs.db_logger import log_query
+        answer_text = "Sorry, I encountered an error processing your question."
+        intent = "unknown"
+        confidence = 0.0
+        citations = []
 
-    log_query(
-        {
+    # === SUPER SAFE LOGGING ===
+    try:
+        from logs.db_logger import log_query
+        log_query({
             "query": user_query,
             "intent": intent,
             "confidence": confidence,
-        }
-    )
+            "answer_length": len(answer_text),
+        })
+    except Exception as log_e:
+        logger.warning(f"Logging skipped: {log_e}")
 
-    # 🔒 GUARANTEED RETURN — NO EXCEPTIONS
     return Response(
         text=answer_text,
         intent=intent,
