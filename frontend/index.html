@@ -137,7 +137,7 @@ body::before {
   opacity: 0;
   transform: translateY(20px) scale(0.95);
   transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  z-index: 999;
+  z-index: 1001;
 }
 
 #ai-box.show {
@@ -448,7 +448,8 @@ let aiTypingDiv = null;
 let aiTypingTimer = null;
 let isOpen = false;
 
-bubble.onclick = () => {
+bubble.onclick = (e) => {
+  e.stopPropagation();
   isOpen = !isOpen;
   if (isOpen) {
     box.style.display = "flex";
@@ -465,6 +466,21 @@ bubble.onclick = () => {
     }, 400);
   }
 };
+
+// Prevent clicks inside the box from bubbling up to the document
+box.addEventListener("click", (e) => e.stopPropagation());
+
+// Close box when clicking outside
+document.addEventListener("click", () => {
+  if (isOpen) {
+    isOpen = false;
+    box.classList.remove("show");
+    setTimeout(() => {
+      box.style.display = "none";
+      bubble.classList.add("pulse");
+    }, 400);
+  }
+});
 
 function timeNow() {
   return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
@@ -507,10 +523,11 @@ function showUserTyping() {
 
 function hideUserTyping() {
   if (userTypingDiv) {
-    userTypingDiv.style.animation = "slideInLeft 0.3s ease reverse";
+    const divToRemove = userTypingDiv;
+    userTypingDiv = null;
+    divToRemove.style.animation = "slideInLeft 0.3s ease reverse";
     setTimeout(() => {
-      userTypingDiv?.remove();
-      userTypingDiv = null;
+      divToRemove.remove();
     }, 300);
   }
 }
@@ -526,10 +543,11 @@ function showAITyping() {
 
 function hideAITyping() {
   if (aiTypingDiv) {
-    aiTypingDiv.style.animation = "messageSlideIn 0.3s ease reverse";
+    const divToRemove = aiTypingDiv;
+    aiTypingDiv = null;
+    divToRemove.style.animation = "messageSlideIn 0.3s ease reverse";
     setTimeout(() => {
-      aiTypingDiv?.remove();
-      aiTypingDiv = null;
+      divToRemove.remove();
     }, 300);
   }
 }
