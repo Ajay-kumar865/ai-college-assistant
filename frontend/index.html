@@ -449,6 +449,7 @@ let aiTypingTimer = null;
 let isOpen = false;
 
 bubble.onclick = (e) => {
+  
   e.stopPropagation();
   isOpen = !isOpen;
   if (isOpen) {
@@ -466,13 +467,12 @@ bubble.onclick = (e) => {
     }, 400);
   }
 };
-
-// Prevent clicks inside the box from bubbling up to the document
-box.addEventListener("click", (e) => e.stopPropagation());
-
-// Close box when clicking outside
-document.addEventListener("click", () => {
-  if (isOpen) {
+box.addEventListener("click", e => e.stopPropagation());
+// Close box when clicking outside — uses contains() instead of stopPropagation
+// so dynamically injected content (marked.parse output, action buttons) can't
+// accidentally break the guard after the first response is shown.
+document.addEventListener("click", (e) => {
+  if (isOpen && !box.contains(e.target) && !bubble.contains(e.target)) {
     isOpen = false;
     box.classList.remove("show");
     setTimeout(() => {

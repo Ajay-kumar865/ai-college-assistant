@@ -1,13 +1,12 @@
 import logging
 from dataclasses import dataclass
 from rag.context_builder import build_context
-
+from rag.qdrant_db import QdrantDB
 from core.routing import build_llm_router
 from intent.classifier import IntentClassifier
-from rag.retriever import retrieve as rag_retrieve
 from llm.prompt_templates import Prompt_Builder
 from tools.registry import TOOL_REGISTRY
-
+qdrant = QdrantDB()
 logger = logging.getLogger(__name__)
 
 # ---- singletons (correct) ----
@@ -68,6 +67,12 @@ def handle_query(user_query: str) -> Response:
 
         if confidence < 0.5:
             intent = "general_qa"
+        # Decide whether to use RAG
+        should_use_rag = (
+            intent in RAG_INTENTS
+            and intent not in FAST_INTENTS
+            and len(user_query.strip()) > 10
+        )
 
         # 2. Tool execution
         if intent in TOOL_INTENTS:
@@ -80,22 +85,20 @@ def handle_query(user_query: str) -> Response:
 
         # 3. RAG retrieval - OPTIMIZED: Only for knowledge-intensive queries
         # FIXED: This is the MAIN LATENCY FIX
-        should_use_rag = (
-            intent in RAG_INTENTS  # Only domain-specific intents
-            and intent not in FAST_INTENTS  # Never for chitchat/general_qa
-            and len(user_query.strip()) > 10  # Skip very short queries like "hi"
-        )
-
         if should_use_rag:
             try:
-                logger.info(f"[PERF] Running RAG retrieval for intent={intent}")
-                rag_result = rag_retrieve(user_query)
-                context = rag_result.get("context", "")
-                citations = rag_result.get("sources", [])
+                logger.info(f"[PERF] Running Qdrant retrieval for intent={intent}")
+
+                results = qdrant.search(user_query, limit=5)
+
+                context = "\n".join([r["text"] for r in results])
+                citations = [r.get("url") for r in results if r.get("url")]
+
             except Exception as e:
-                logger.error(f"RAG retrieval failed: {e}")
+                logger.error(f"Qdrant retrieval failed: {e}")
                 context = ""
                 citations = []
+            
         else:
             logger.info(
                 f"[PERF] Skipping RAG for intent={intent}, query_len={len(user_query)}"

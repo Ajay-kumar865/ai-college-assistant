@@ -1,50 +1,35 @@
-# rag/vector_store.py
-
-from typing import List, Dict, Any
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams
 import logging
-
-from db.qdrant_client import QdrantDB
 
 logger = logging.getLogger(__name__)
 
+_COLLECTION_NAME = "university_docs"
 
-class VectorStore:
-    """
-    Thin abstraction over Qdrant.
-    Embeddings are intentionally not implemented yet.
-    """
 
-    def __init__(self):
-        self.db = QdrantDB()
+class QdrantDB:
+    def __init__(self, host: str = "localhost", port: int = 6333):
+        self.client = QdrantClient(host=host, port=port)
+        self._ensure_collection()
 
-    def is_ready(self) -> bool:
-        """
-        Returns True if vector store backend is reachable.
-        Does NOT imply embeddings exist.
-        """
-        return self.db.health_check()
+    def _ensure_collection(self):
+        collections = self.client.get_collections().collections
+        if not any(c.name == _COLLECTION_NAME for c in collections):
+            self.client.create_collection(
+                collection_name=_COLLECTION_NAME,
+                vectors_config=VectorParams(
+                    size=384,  # placeholder (MiniLM size later)
+                    distance=Distance.COSINE,
+                ),
+            )
+            logger.info("Qdrant collection created")
+        else:
+            logger.info("Qdrant collection already exists")
 
-    def search(
-        self,
-        query_vector: List[float],
-        top_k: int = 5,
-        filters: Dict[str, Any] | None = None,
-    ) -> List[Dict[str, Any]]:
-        """
-        Placeholder vector search.
-        Will be implemented once embeddings are added.
-        """
-        logger.warning("Vector search called but embeddings are not implemented yet")
-        return []
-
-    def upsert(
-        self,
-        vectors: List[List[float]],
-        payloads: List[Dict[str, Any]],
-        ids: List[str] | None = None,
-    ) -> None:
-        """
-        Placeholder upsert.
-        Will be implemented during ingestion phase.
-        """
-        logger.warning("Vector upsert called but embeddings are not implemented yet")
+    def health_check(self) -> bool:
+        try:
+            self.client.get_collections()
+            return True
+        except Exception as e:
+            logger.error(f"Qdrant health check failed: {e}")
+            return False
