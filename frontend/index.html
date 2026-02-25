@@ -434,10 +434,19 @@ bubble.onclick = (e) => {
 // `contains` and stopping propagation from inside the box gives us a rock‑solid
 // guarantee that interactions with the UI won’t bubble out and trigger the
 // handler.
-document.addEventListener("mousedown", e => {
+// for debugging: when the chat unexpectedly closes we want to know what
+// triggered it.  after we've diagnosed the issue we can remove this log.
+let _dbgClose = true;
+
+function maybeClose(e) {
   if (!isOpen) return;
-  // `contains` works with nodes and correctly handles text nodes too
+  if (_dbgClose) {
+    console.debug("[chat] doc click", e.target,
+                  "inside box?", box.contains(e.target),
+                  "inside bubble?", bubble.contains(e.target));
+  }
   if (!box.contains(e.target) && !bubble.contains(e.target)) {
+    if (_dbgClose) console.warn("[chat] closing panel due to click on", e.target);
     isOpen = false;
     box.classList.remove("show");
     setTimeout(() => {
@@ -445,7 +454,16 @@ document.addEventListener("mousedown", e => {
       bubble.classList.add("pulse");
     }, 400);
   }
-});
+}
+
+// listen for both mouse and keyboard-generated interactions; click is more
+// semantically aligned with "user finished a gesture", which avoids problems
+// where a stray mousedown (e.g. synthetic from hitting Enter) closes the panel.
+document.addEventListener("click", maybeClose);
+
+// also block both mouse and click events inside the box so they never bubble up
+box.addEventListener("mousedown", e => e.stopPropagation());
+box.addEventListener("click", e => e.stopPropagation());
 
 // ensure clicks inside the chat box never bubble up to the document listener
 box.addEventListener("mousedown", e => {
