@@ -394,35 +394,20 @@ let userTypingTimer = null;
 let aiTypingDiv    = null;
 let aiTypingTimer  = null;
 let isOpen         = false;
-let isBusy         = false;
+let isBusy         = false;   // ← prevents double-sends while waiting for response
+let ignoreOutsideCloseUntil = 0;
 
-// ─── Toggle chat window ───────────────────────────────────────────────────────
-bubble.onclick = (e) => {
-  e.stopPropagation();
-  isOpen = !isOpen;
-  if (isOpen) {
-    box.style.display = "flex";
-    setTimeout(() => {
-      box.classList.add("show");
-      bubble.classList.remove("pulse");
-    }, 10);
-    if (!messages.innerHTML) showWelcome();
-  } else {
-    box.classList.remove("show");
-    setTimeout(() => {
-      box.style.display = "none";
-      bubble.classList.add("pulse");
-    }, 400);
-  }
-};
+function openChat() {
+  isOpen = true;
+  box.style.display = "flex";
+  setTimeout(() => {
+    box.classList.add("show");
+    bubble.classList.remove("pulse");
+  }, 10);
+  if (!messages.innerHTML) showWelcome();
+}
 
-// ─── Close when clicking outside (rock-solid version) ────────────────────────
-function maybeClose(e) {
-  if (!isOpen) return;
-
-  // If the click is anywhere inside the box or on the bubble → do nothing
-  if (box.contains(e.target) || bubble.contains(e.target)) return;
-
+function closeChat() {
   isOpen = false;
   box.classList.remove("show");
   setTimeout(() => {
@@ -431,11 +416,30 @@ function maybeClose(e) {
   }, 400);
 }
 
-document.addEventListener("click", maybeClose);
+// ─── Toggle chat window ───────────────────────────────────────────────────────
+bubble.onclick = (e) => {
+  e.stopPropagation();
+  if (isOpen) closeChat();
+  else openChat();
+};
 
-// Prevent any click/mousedown inside the box from reaching the document
-box.addEventListener("mousedown", e => e.stopPropagation());
-box.addEventListener("click",     e => e.stopPropagation());
+// clicking anywhere in the document should close the chat only when the click is
+// truly outside the widget. `composedPath()` is more robust than checking only
+// `target`, and we briefly ignore outside closes right after a send to prevent
+// accidental collapse during fast keyboard/mouse interactions.
+document.addEventListener("pointerdown", e => {
+  if (!isOpen) return;
+  if (Date.now() < ignoreOutsideCloseUntil) return;
+
+  const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+  const clickedInside = path.includes(box) || path.includes(bubble) || box.contains(e.target);
+  if (!clickedInside) closeChat();
+});
+
+// ensure clicks inside the chat box never bubble up to the document listener
+box.addEventListener("pointerdown", e => {
+  e.stopPropagation();
+});
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function timeNow() {
@@ -547,6 +551,7 @@ function sendMessage(prefill = null) {
   scrollToBottom();
 
   setBusy(true);
+  ignoreOutsideCloseUntil = Date.now() + 1200;
   aiTypingTimer = setTimeout(showAITyping, 400);
 
   fetch("http://127.0.0.1:8000/chat", {
