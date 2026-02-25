@@ -2,7 +2,7 @@
 from fastapi import FastAPI, APIRouter, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.concurrency import run_in_threadpool
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import List, Optional, Any
 from datetime import datetime
 import json
@@ -45,9 +45,8 @@ class ChatRequest(BaseModel):
 
 
 class ChatResponse(BaseModel):
-    answer: str
     response: str
-    sources: List[Any] = []
+    sources: List[Any] = Field(default_factory=list)
 
 
 class FeedbackRequest(BaseModel):
@@ -89,7 +88,6 @@ async def chat(req: ChatRequest):
         LAST_CHAT["response"] = result.text
 
         return {
-            "answer": result.text,
             "response": result.text,
             "sources": serialize_citations(result.citations),
         }
