@@ -397,8 +397,13 @@ let isOpen         = false;
 let isBusy         = false;   // ← prevents double-sends while waiting for response
 let ignoreOutsideCloseUntil = 0;
 
+function bumpOutsideCloseGuard(ms = 1200) {
+  ignoreOutsideCloseUntil = Date.now() + ms;
+}
+
 function openChat() {
   isOpen = true;
+  bumpOutsideCloseGuard(800);
   box.style.display = "flex";
   setTimeout(() => {
     box.classList.add("show");
@@ -429,6 +434,7 @@ bubble.onclick = (e) => {
 // accidental collapse during fast keyboard/mouse interactions.
 document.addEventListener("pointerdown", e => {
   if (!isOpen) return;
+  if (isBusy) return;
   if (Date.now() < ignoreOutsideCloseUntil) return;
 
   const path = typeof e.composedPath === "function" ? e.composedPath() : [];
@@ -438,6 +444,7 @@ document.addEventListener("pointerdown", e => {
 
 // ensure clicks inside the chat box never bubble up to the document listener
 box.addEventListener("pointerdown", e => {
+  bumpOutsideCloseGuard(600);
   e.stopPropagation();
 });
 
@@ -551,7 +558,7 @@ function sendMessage(prefill = null) {
   scrollToBottom();
 
   setBusy(true);
-  ignoreOutsideCloseUntil = Date.now() + 1200;
+  bumpOutsideCloseGuard(1800);
   aiTypingTimer = setTimeout(showAITyping, 400);
 
   fetch("http://127.0.0.1:8000/chat", {
@@ -573,6 +580,7 @@ function sendMessage(prefill = null) {
     clearTimeout(aiTypingTimer);
     hideAITyping();
     setBusy(false);
+    bumpOutsideCloseGuard(1200);
 
     status.innerText = "Sent ✓";
     status.style.color = "#667eea";
@@ -596,6 +604,7 @@ function sendMessage(prefill = null) {
     clearTimeout(aiTypingTimer);
     hideAITyping();
     setBusy(false);
+    bumpOutsideCloseGuard(1200);
 
     status.innerText = "Failed ✗";
     status.style.color = "#e53e3e";
@@ -673,12 +682,14 @@ function sendFeedback(type, button) {
 
 // ─── Input events ─────────────────────────────────────────────────────────────
 input.addEventListener("input", () => {
+  bumpOutsideCloseGuard(600);
   showUserTyping();
   clearTimeout(userTypingTimer);
   userTypingTimer = setTimeout(hideUserTyping, 700);
 });
 
 input.addEventListener("keydown", e => {
+  bumpOutsideCloseGuard(600);
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
