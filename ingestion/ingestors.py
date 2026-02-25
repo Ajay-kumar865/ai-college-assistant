@@ -1,30 +1,47 @@
+import requests
+import tempfile
 from pathlib import Path
 from urllib.parse import urlparse
 
 from ingestion.processors.html_processor import process_html
 from ingestion.processors.pdf_processor import process_pdf
-from ingestion.processors.docx_processor import process_docx
-from ingestion.processors.image_ocr import process_image
 
 
 def ingest_item(item: str):
+
     if is_url(item):
-        text = process_html(item)
-        return text, {
-            "source": "html",
-            "url": item,
-        }
 
-    path = Path(item)
+        try:
+            response = requests.get(item, timeout=20)
+            response.raise_for_status()
 
-    if path.suffix.lower() == ".pdf":
-        return process_pdf(path), {"source": "pdf", "path": str(path)}
+            content_type = response.headers.get("content-type", "").lower()
 
-    if path.suffix.lower() in [".docx", ".doc"]:
-        return process_docx(path), {"source": "docx", "path": str(path)}
+            # PDF
+            if "application/pdf" in content_type or item.lower().endswith(".pdf"):
 
-    if path.suffix.lower() in [".png", ".jpg", ".jpeg"]:
-        return process_image(path), {"source": "image", "path": str(path)}
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+                    tmp.write(response.content)
+                    tmp_path = tmp.name
+
+                return process_pdf(Path(tmp_path)), {
+                    "source": "pdf",
+                    "url": item,
+                }
+
+            # HTML
+            if "text/html" in content_type:
+                text = process_html(item)
+                return text, {
+                    "source": "html",
+                    "url": item,
+                }
+
+            return "", {}
+
+        except Exception as e:
+            print(f"Failed to ingest {item}: {e}")
+            return "", {}
 
     raise ValueError(f"Unsupported ingestion item: {item}")
 

@@ -1,10 +1,26 @@
 import requests
-from ingestion.extract_html import extract_html_text
+from bs4 import BeautifulSoup
 
 
-def process_html(url: str) -> str:
-    response = requests.get(url, timeout=15)
-    response.raise_for_status()
+def process_html(url: str):
 
-    html = response.text
-    return extract_html_text(html)
+    try:
+        response = requests.get(url, timeout=15)
+        response.raise_for_status()
+
+        if "text/html" not in response.headers.get("content-type", ""):
+            return ""
+
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Remove scripts & styles
+        for tag in soup(["script", "style", "noscript"]):
+            tag.decompose()
+
+        text = soup.get_text(separator=" ", strip=True)
+
+        return text
+
+    except Exception as e:
+        print(f"Failed to process HTML {url}: {e}")
+        return ""
