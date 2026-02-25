@@ -15,7 +15,7 @@ from logs.log_setup import Log_Setup
 # ---- app init ----
 app = FastAPI(title="AI College Assistant API")
 
-# ---- CORS (already good, but keeping it) ----
+# ---- CORS ----
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -37,7 +37,7 @@ router = APIRouter()
 
 
 # =========================
-# Models (FIXED)
+# Models
 # =========================
 class ChatRequest(BaseModel):
     message: str
@@ -47,7 +47,7 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     response: str
-    sources: List[Any] = []   # ← Changed to Any so dicts are allowed
+    sources: List[Any] = []
 
 
 class FeedbackRequest(BaseModel):
@@ -56,12 +56,33 @@ class FeedbackRequest(BaseModel):
 
 
 # =========================
-# Routes (SUPER SAFE)
+# Helpers
+# =========================
+def serialize_citations(citations) -> list:
+    """Safely convert any citation format to JSON-serializable list."""
+    safe = []
+    for c in (citations or []):
+        if isinstance(c, (str, int, float, bool)) or c is None:
+            safe.append(c)
+        elif isinstance(c, dict):
+            safe.append(c)
+        elif hasattr(c, "model_dump"):          # Pydantic v2
+            safe.append(c.model_dump())
+        elif hasattr(c, "dict"):                # Pydantic v1
+            safe.append(c.dict())
+        elif hasattr(c, "__dict__"):            # dataclass / plain object
+            safe.append(vars(c))
+        else:
+            safe.append(str(c))                 # absolute fallback
+    return safe
+
+
+# =========================
+# Routes
 # =========================
 @router.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
     try:
-        # Run heavy logic safely in threadpool
         result = await run_in_threadpool(handle_query, req.message)
 
         LAST_CHAT["query"] = req.message
@@ -70,14 +91,14 @@ async def chat(req: ChatRequest):
         return {
             "answer": result.text,
             "response": result.text,
-            "sources": result.citations or [],
+            "sources": serialize_citations(result.citations),
         }
 
     except Exception as e:
         logging.exception(f"Chat endpoint failed for message: {req.message}")
         raise HTTPException(
             status_code=500,
-            detail="Sorry, something went wrong processing your question. Please try again."
+            detail=str(e)   # expose real error so you can debug in DevTools
         )
 
 
