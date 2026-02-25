@@ -405,50 +405,49 @@ let aiTypingDiv    = null;
 let aiTypingTimer  = null;
 let isOpen         = false;
 let isBusy         = false;   // ← prevents double-sends while waiting for response
+let ignoreOutsideCloseUntil = 0;
+
+function openChat() {
+  isOpen = true;
+  box.style.display = "flex";
+  setTimeout(() => {
+    box.classList.add("show");
+    bubble.classList.remove("pulse");
+  }, 10);
+  if (!messages.innerHTML) showWelcome();
+}
+
+function closeChat() {
+  isOpen = false;
+  box.classList.remove("show");
+  setTimeout(() => {
+    box.style.display = "none";
+    bubble.classList.add("pulse");
+  }, 400);
+}
 
 // ─── Toggle chat window ───────────────────────────────────────────────────────
 bubble.onclick = (e) => {
   e.stopPropagation();
-  isOpen = !isOpen;
-  if (isOpen) {
-    box.style.display = "flex";
-    setTimeout(() => {
-      box.classList.add("show");
-      bubble.classList.remove("pulse");
-    }, 10);
-    if (!messages.innerHTML) showWelcome();
-  } else {
-    box.classList.remove("show");
-    setTimeout(() => {
-      box.style.display = "none";
-      bubble.classList.add("pulse");
-    }, 400);
-  }
+  if (isOpen) closeChat();
+  else openChat();
 };
 
-// clicking anywhere in the document should close the chat, but only when the
-// click is *outside* the bubble/box.  previously we relied on `closest` which can
-// misbehave with text nodes, rapidly added elements, or when the target isn’t
-// yet attached to the DOM (eg. during a keypress send).  as a result the chat
-// would sometimes shut immediately after the user sent a message.  using
-// `contains` and stopping propagation from inside the box gives us a rock‑solid
-// guarantee that interactions with the UI won’t bubble out and trigger the
-// handler.
-document.addEventListener("mousedown", e => {
+// clicking anywhere in the document should close the chat only when the click is
+// truly outside the widget. `composedPath()` is more robust than checking only
+// `target`, and we briefly ignore outside closes right after a send to prevent
+// accidental collapse during fast keyboard/mouse interactions.
+document.addEventListener("pointerdown", e => {
   if (!isOpen) return;
-  // `contains` works with nodes and correctly handles text nodes too
-  if (!box.contains(e.target) && !bubble.contains(e.target)) {
-    isOpen = false;
-    box.classList.remove("show");
-    setTimeout(() => {
-      box.style.display = "none";
-      bubble.classList.add("pulse");
-    }, 400);
-  }
+  if (Date.now() < ignoreOutsideCloseUntil) return;
+
+  const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+  const clickedInside = path.includes(box) || path.includes(bubble) || box.contains(e.target);
+  if (!clickedInside) closeChat();
 });
 
 // ensure clicks inside the chat box never bubble up to the document listener
-box.addEventListener("mousedown", e => {
+box.addEventListener("pointerdown", e => {
   e.stopPropagation();
 });
 
@@ -562,6 +561,7 @@ function sendMessage(prefill = null) {
   scrollToBottom();
 
   setBusy(true);
+  ignoreOutsideCloseUntil = Date.now() + 1200;
   aiTypingTimer = setTimeout(showAITyping, 400);
 
   // ─── FIX: check r.ok BEFORE parsing JSON ───────────────────────────────────
