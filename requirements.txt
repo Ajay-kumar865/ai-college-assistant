@@ -34,3 +34,4 @@ certifi
 # --- Utilities ---
 tqdm
 loguru
+fitz

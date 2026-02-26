@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from rag.qdrant_db import QdrantDB
 
-DATA_PATH = Path("storage/raw/documents.jsonl")
+DATA_PATH = Path("storage/ingestion/documents.jsonl")
 
 
 def main():
