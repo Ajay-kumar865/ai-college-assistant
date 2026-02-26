@@ -35,3 +35,4 @@ certifi
 tqdm
 loguru
 fitz
+google-genai
