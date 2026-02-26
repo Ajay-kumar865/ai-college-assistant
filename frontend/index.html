@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+<<<<<<< HEAD
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>University Assistant Widget</title>
@@ -388,6 +389,438 @@
         }
       });
     });
+=======
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI College Assistant</title>
+  <style>
+    :root {
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #1a2340;
+      --muted: #5d6a85;
+      --primary: #3e63dd;
+      --primary-strong: #2f4fb5;
+      --bot: #eef2ff;
+      --user: #3e63dd;
+      --danger: #c53030;
+      --border: #dbe3f6;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, Segoe UI, Roboto, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at top right, #dce5ff 0%, var(--bg) 40%);
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 1rem;
+    }
+
+    .app {
+      width: min(920px, 100%);
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(18, 33, 80, 0.12);
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: min(92vh, 760px);
+      overflow: hidden;
+    }
+
+    .header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      background: linear-gradient(180deg, #f9fbff 0%, #ffffff 100%);
+    }
+
+    .title {
+      font-weight: 700;
+      margin: 0;
+      font-size: 1.05rem;
+    }
+
+    .subtitle {
+      margin: 0.2rem 0 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .status {
+      font-size: 0.85rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .messages {
+      padding: 1rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+      background: #f9fbff;
+    }
+
+    .message {
+      max-width: min(78ch, 85%);
+      padding: 0.8rem 1rem;
+      border-radius: 14px;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border: 1px solid transparent;
+    }
+
+    .message.bot {
+      align-self: flex-start;
+      background: var(--bot);
+      border-color: #dae2ff;
+    }
+
+    .message.user {
+      align-self: flex-end;
+      background: var(--user);
+      color: white;
+    }
+
+    .message.error {
+      align-self: flex-start;
+      border-color: #fed7d7;
+      background: #fff5f5;
+      color: #742a2a;
+    }
+
+    .meta {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+    }
+
+    .sources {
+      margin-top: 0.6rem;
+      padding-top: 0.6rem;
+      border-top: 1px dashed #c6d2f5;
+      font-size: 0.82rem;
+      color: #324173;
+    }
+
+    .sources ul {
+      margin: 0.4rem 0 0;
+      padding-left: 1rem;
+    }
+
+    .composer {
+      padding: 0.9rem;
+      border-top: 1px solid var(--border);
+      background: #fff;
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 0.6rem;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 48px;
+      max-height: 160px;
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 0.75rem 0.85rem;
+      font: inherit;
+      color: inherit;
+    }
+
+    textarea:focus {
+      outline: 2px solid rgba(62, 99, 221, 0.25);
+      border-color: var(--primary);
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      background: var(--primary);
+      color: white;
+      font-weight: 600;
+      padding: 0 1rem;
+      cursor: pointer;
+      min-width: 100px;
+    }
+
+    button:hover { background: var(--primary-strong); }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
+    .linkish {
+      background: transparent;
+      color: var(--primary);
+      min-width: auto;
+      padding: 0;
+      font-weight: 500;
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 680px) {
+      .app { min-height: 95vh; border-radius: 14px; }
+      .message { max-width: 92%; }
+      .input-row { grid-template-columns: 1fr; }
+      button { min-height: 44px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="AI College Assistant chat">
+    <header class="header">
+      <div>
+        <h1 class="title">🎓 AI College Assistant</h1>
+        <p class="subtitle">Reliable chat UI aligned with your FastAPI routes.</p>
+      </div>
+      <div id="status" class="status">Idle</div>
+    </header>
+
+    <section id="messages" class="messages" aria-live="polite" aria-label="Conversation"></section>
+
+    <section class="composer">
+      <div class="input-row">
+        <textarea id="messageInput" placeholder="Ask about admissions, notices, events, or documents..." aria-label="Type your question"></textarea>
+        <button id="sendButton" type="button">Send</button>
+      </div>
+      <div class="controls">
+        <div class="hint">Enter to send • Shift+Enter for newline.</div>
+        <button id="clearButton" class="linkish" type="button">Clear conversation</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE = "http://127.0.0.1:8000";
+    const STORAGE_KEY = "ai_college_assistant_chat_v1";
+
+    const elements = {
+      messages: document.getElementById("messages"),
+      status: document.getElementById("status"),
+      input: document.getElementById("messageInput"),
+      sendButton: document.getElementById("sendButton"),
+      clearButton: document.getElementById("clearButton"),
+    };
+
+    const state = {
+      messages: [],
+      pendingController: null,
+      isSending: false,
+    };
+
+    function setStatus(label) {
+      elements.status.textContent = label;
+    }
+
+    function formatTime(value) {
+      return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+    function sanitizeToText(value) {
+      if (value === null || value === undefined) return "";
+      return String(value);
+    }
+
+    function normalizeSources(sources) {
+      if (!Array.isArray(sources)) return [];
+      return sources.map((source) => {
+        if (typeof source === "string") return source;
+        if (source && typeof source === "object") {
+          const keys = Object.keys(source);
+          if (!keys.length) return "{}";
+          const compact = keys.slice(0, 3).map((key) => `${key}: ${source[key]}`).join(" | ");
+          return compact;
+        }
+        return String(source);
+      });
+    }
+
+    function renderMessage(message) {
+      const wrapper = document.createElement("article");
+      wrapper.className = `message ${message.role} ${message.error ? "error" : ""}`;
+      wrapper.textContent = sanitizeToText(message.text);
+
+      const meta = document.createElement("div");
+      meta.className = "meta";
+      meta.textContent = `${message.role === "user" ? "You" : "Assistant"} • ${formatTime(message.timestamp)}`;
+      wrapper.appendChild(meta);
+
+      if (message.sources?.length) {
+        const sourceBlock = document.createElement("section");
+        sourceBlock.className = "sources";
+        sourceBlock.innerHTML = "<strong>Sources</strong>";
+
+        const list = document.createElement("ul");
+        message.sources.forEach((entry) => {
+          const item = document.createElement("li");
+          item.textContent = entry;
+          list.appendChild(item);
+        });
+
+        sourceBlock.appendChild(list);
+        wrapper.appendChild(sourceBlock);
+      }
+
+      elements.messages.appendChild(wrapper);
+      elements.messages.scrollTop = elements.messages.scrollHeight;
+    }
+
+    function renderAll() {
+      elements.messages.innerHTML = "";
+      state.messages.forEach(renderMessage);
+    }
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.messages));
+    }
+
+    function addMessage(partial) {
+      const message = {
+        role: partial.role,
+        text: sanitizeToText(partial.text),
+        timestamp: partial.timestamp || new Date().toISOString(),
+        sources: partial.sources || [],
+        error: Boolean(partial.error),
+      };
+      state.messages.push(message);
+      renderMessage(message);
+      persist();
+    }
+
+    function setSending(sending) {
+      state.isSending = sending;
+      elements.sendButton.disabled = sending;
+      elements.input.disabled = sending;
+      setStatus(sending ? "Waiting for response..." : "Idle");
+    }
+
+    async function sendMessage() {
+      if (state.isSending) return;
+      const text = elements.input.value.trim();
+      if (!text) return;
+
+      addMessage({ role: "user", text });
+      elements.input.value = "";
+
+      const controller = new AbortController();
+      state.pendingController = controller;
+      setSending(true);
+
+      try {
+        const response = await fetch(`${API_BASE}/chat`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ message: text, timestamp: new Date().toISOString() }),
+          signal: controller.signal,
+        });
+
+        let payload = null;
+        try {
+          payload = await response.json();
+        } catch {
+          payload = null;
+        }
+
+        if (!response.ok) {
+          throw new Error(payload?.detail || `Request failed with status ${response.status}`);
+        }
+
+        addMessage({
+          role: "bot",
+          text: payload?.response || "No response body returned.",
+          sources: normalizeSources(payload?.sources),
+        });
+      } catch (error) {
+        addMessage({
+          role: "bot",
+          text: `Could not complete request: ${error?.message || "Unknown error"}`,
+          error: true,
+        });
+      } finally {
+        state.pendingController = null;
+        setSending(false);
+        elements.input.focus();
+      }
+    }
+
+    function clearConversation() {
+      if (state.isSending && state.pendingController) {
+        state.pendingController.abort();
+      }
+      state.messages = [];
+      persist();
+      renderAll();
+      addMessage({ role: "bot", text: "Conversation cleared. Ask a new question anytime." });
+    }
+
+    function restoreConversation() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) {
+          addMessage({ role: "bot", text: "Hi! I can help with admissions, events, notices, and college documents." });
+          return;
+        }
+
+        const parsed = JSON.parse(raw);
+        if (!Array.isArray(parsed)) throw new Error("Invalid history format.");
+
+        state.messages = parsed.filter((entry) => entry && entry.role && entry.text).slice(-100);
+        renderAll();
+
+        if (!state.messages.length) {
+          addMessage({ role: "bot", text: "Hi! I can help with admissions, events, notices, and college documents." });
+        }
+      } catch {
+        localStorage.removeItem(STORAGE_KEY);
+        state.messages = [];
+        renderAll();
+        addMessage({ role: "bot", text: "History reset due to invalid saved data." });
+      }
+    }
+
+    elements.sendButton.addEventListener("click", sendMessage);
+    elements.clearButton.addEventListener("click", clearConversation);
+    elements.input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+      }
+    });
+
+    restoreConversation();
+    elements.input.focus();
+>>>>>>> f42906fdcd03e35e9ef8b8582fb7c369797d3b44
   </script>
 </body>
 
