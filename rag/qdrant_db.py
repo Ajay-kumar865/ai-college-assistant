@@ -75,7 +75,12 @@ class QdrantDB:
         for i in range(0, total, batch_size):
             batch = docs[i:i + batch_size]
 
-            texts = [d["text"] for d in batch]
+            texts = []
+            for d in batch:
+                discovered_links = d.get("discovered_links", [])
+                links_text = " ".join(discovered_links) if discovered_links else ""
+                texts.append(f"{d['text']} {links_text}".strip())
+
             embeddings = self.embedder.encode(texts)
 
             points = []
@@ -85,8 +90,16 @@ class QdrantDB:
                     "id": str(uuid.uuid4()),
                     "vector": vec.tolist(),
                     "payload": {
-                        "text": doc["text"],
-                        "url": doc.get("url", "")
+                        "text": (
+                            doc["text"]
+                            + (
+                                "\n\nRelated links: " + ", ".join(doc.get("discovered_links", []))
+                                if doc.get("discovered_links")
+                                else ""
+                            )
+                        ),
+                        "url": doc.get("url", ""),
+                        "discovered_links": doc.get("discovered_links", []),
                     }
                 })
 

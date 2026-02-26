@@ -36,7 +36,7 @@ def append_failed_url(url):
 # Main Crawl Function
 # ==============================
 
-def crawl_site(max_pages: int = 500) -> list[str]:
+def crawl_site(max_pages: int = 500) -> list[dict]:
 
     domain = urlparse(SEED_URLS[0]).netloc
     url_manager = URLManager(domain)
@@ -50,10 +50,10 @@ def crawl_site(max_pages: int = 500) -> list[str]:
             if url not in failed_urls:
                 url_manager.add_url(url)
 
-    collected = []
+    collected: list[dict] = []
     processed_count = 0
 
-    # 🔥 Use session (faster, connection pooling)
+    # Use session (faster, connection pooling)
     session = requests.Session()
 
     while url_manager.has_next() and processed_count < max_pages:
@@ -78,13 +78,21 @@ def crawl_site(max_pages: int = 500) -> list[str]:
 
             # HTML
             if "text/html" in content_type:
-                url_manager.extract_links(response.text, base_url=url)
-                collected.append(url)
+                discovered_links = url_manager.extract_links(response.text, base_url=url)
+                collected.append({
+                    "url": url,
+                    "source": "html",
+                    "discovered_links": discovered_links,
+                })
                 processed_count += 1
 
             # PDF
             elif "application/pdf" in content_type or url.lower().endswith(".pdf"):
-                collected.append(url)
+                collected.append({
+                    "url": url,
+                    "source": "pdf",
+                    "discovered_links": [],
+                })
                 processed_count += 1
 
             # Save state every 50 pages (less disk pressure)
