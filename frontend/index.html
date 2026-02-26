@@ -471,6 +471,28 @@
 
         console.log(`[Feedback Registered] Type: ${type}, Message ID: ${messageId}, Timestamp: ${new Date().toISOString()}`);
 
+        // Show "Thanks for your feedback" temporarily below the message
+        const msgWrapper = btn.closest('.message-wrapper');
+        if (msgWrapper) {
+          let thanksDiv = msgWrapper.querySelector('.feedback-thanks');
+          if (!thanksDiv) {
+            thanksDiv = document.createElement('div');
+            thanksDiv.className = 'feedback-thanks';
+            thanksDiv.style.fontSize = '0.75rem';
+            thanksDiv.style.color = '#10b981';
+            thanksDiv.style.marginTop = '4px';
+            thanksDiv.style.marginLeft = '1rem';
+            msgWrapper.appendChild(thanksDiv);
+          }
+          thanksDiv.textContent = "Thanks for your feedback!";
+          // Remove the message after 3 seconds
+          setTimeout(() => {
+            if (thanksDiv && thanksDiv.parentNode) {
+              thanksDiv.parentNode.removeChild(thanksDiv);
+            }
+          }, 3000);
+        }
+
         try {
           await fetch('http://localhost:8001/feedback', {
             method: 'POST',
