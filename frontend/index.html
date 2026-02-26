@@ -572,10 +572,32 @@
           botTime.className = 'message-time';
           botTime.textContent = 'AI • ' + getFormattedTime();
 
-          // Create Feedback Buttons
+          // Create Feedback & Action Buttons
           const msgId = messageIdCounter++;
           const feedbackDiv = document.createElement('div');
           feedbackDiv.className = 'feedback-btns';
+
+          // Copy Button
+          const copyBtn = document.createElement('button');
+          copyBtn.className = 'feedback-btn';
+          copyBtn.title = 'Copy';
+          copyBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+          copyBtn.onclick = () => {
+            navigator.clipboard.writeText(data.response);
+            copyBtn.style.color = '#10b981'; // flash green
+            setTimeout(() => copyBtn.style.color = '', 1500);
+          };
+
+          // Regenerate Button
+          const regenBtn = document.createElement('button');
+          regenBtn.className = 'feedback-btn';
+          regenBtn.title = 'Regenerate';
+          regenBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><polyline points="3 3 3 8 8 8"></polyline></svg>';
+          regenBtn.onclick = () => {
+            // Re-trigger global sendMessage with the same cached text
+            widgetInput.value = text;
+            sendMessage();
+          };
 
           // Thumbs Up
           const likeBtn = document.createElement('button');
@@ -591,8 +613,11 @@
           dislikeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg>';
           dislikeBtn.onclick = (e) => handleFeedback(e, msgId, 'dislike');
 
+          feedbackDiv.appendChild(copyBtn);
+          feedbackDiv.appendChild(regenBtn);
           feedbackDiv.appendChild(likeBtn);
           feedbackDiv.appendChild(dislikeBtn);
+
           botMeta.appendChild(botTime);
           botMeta.appendChild(feedbackDiv);
 
