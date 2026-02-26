@@ -2,436 +2,610 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI College Assistant</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
   <style>
     :root {
-      --bg: #f4f6fb;
-      --card: #ffffff;
-      --text: #1a2340;
-      --muted: #5d6a85;
-      --primary: #3e63dd;
-      --primary-strong: #2f4fb5;
-      --bot: #eef2ff;
-      --user: #3e63dd;
-      --danger: #c53030;
-      --border: #dbe3f6;
+      --primary: #7c3aed;
+      /* Exact purple from screenshot */
+      --bg-body: #ffffff;
+      --message-bot: #f3f4f6;
+      /* Light gray */
+      --message-user: #8b5cf6;
+      /* Matches the user bubble in screenshot */
+      --text-main: #374151;
+      --text-muted: #9ca3af;
+      --font-family: 'Inter', sans-serif;
     }
-
-    * { box-sizing: border-box; }
 
     body {
       margin: 0;
-      font-family: Inter, Segoe UI, Roboto, sans-serif;
-      color: var(--text);
-      background: radial-gradient(circle at top right, #dce5ff 0%, var(--bg) 40%);
+      font-family: var(--font-family);
+      background: linear-gradient(135deg, #a78bfa, #8b5cf6, #7c3aed);
       min-height: 100vh;
-      display: grid;
-      place-items: center;
-      padding: 1rem;
     }
 
-    .app {
-      width: min(920px, 100%);
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      box-shadow: 0 15px 40px rgba(18, 33, 80, 0.12);
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-      min-height: min(92vh, 760px);
-      overflow: hidden;
-    }
-
-    .header {
-      padding: 1rem 1.25rem;
-      border-bottom: 1px solid var(--border);
+    /* 
+          Floating Toggle Button
+        */
+    #widget-toggle-btn {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--primary);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      background: linear-gradient(180deg, #f9fbff 0%, #ffffff 100%);
-    }
-
-    .title {
+      justify-content: center;
+      z-index: 9999;
+      font-size: 1.1rem;
       font-weight: 700;
-      margin: 0;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+
+    #widget-toggle-btn:hover {
+      transform: scale(1.05);
+      background: #6d28d9;
+    }
+
+    /*
+          Widget Container
+        */
+    #ai-widget-container {
+      position: fixed;
+      bottom: 6rem;
+      /* Above the button */
+      right: 2rem;
+      width: 380px;
+      height: 600px;
+      max-width: calc(100vw - 4rem);
+      max-height: calc(100vh - 8rem);
+
+      background: var(--bg-body);
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+
+      display: flex;
+      flex-direction: column;
+      z-index: 9998;
+      overflow: hidden;
+
+      transform-origin: bottom right;
+      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+    }
+
+    #ai-widget-container.widget-hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.8) translateY(20px);
+    }
+
+    #ai-widget-container.widget-visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1) translateY(0);
+    }
+
+    /* Header */
+    .widget-header {
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      background: var(--primary);
+      color: white;
+    }
+
+    .widget-avatar {
+      width: 36px;
+      height: 36px;
+      background: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 0.85rem;
+      font-size: 1.3rem;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .widget-title {
+      font-weight: 600;
       font-size: 1.05rem;
+      letter-spacing: 0.3px;
+      flex: 1;
     }
 
-    .subtitle {
-      margin: 0.2rem 0 0;
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
-    .status {
-      font-size: 0.85rem;
-      color: var(--muted);
-      white-space: nowrap;
-    }
-
-    .messages {
-      padding: 1rem;
+    /* Body */
+    .widget-body {
+      flex: 1;
+      padding: 1.25rem;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 0.85rem;
-      background: #f9fbff;
+      gap: 1.25rem;
+      background: #ffffff;
+    }
+
+    /* Scrollbars */
+    .widget-body::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .widget-body::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .widget-body::-webkit-scrollbar-thumb {
+      background: #e5e7eb;
+      border-radius: 4px;
+    }
+
+    .message-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .message-wrapper.bot {
+      align-items: flex-start;
+    }
+
+    .message-wrapper.user {
+      align-items: flex-end;
     }
 
     .message {
-      max-width: min(78ch, 85%);
-      padding: 0.8rem 1rem;
-      border-radius: 14px;
-      line-height: 1.45;
-      white-space: pre-wrap;
-      word-break: break-word;
-      border: 1px solid transparent;
+      padding: 0.85rem 1.1rem;
+      border-radius: 16px;
+      font-size: 0.95rem;
+      line-height: 1.4;
+      max-width: 85%;
+      color: var(--text-main);
     }
 
-    .message.bot {
-      align-self: flex-start;
-      background: var(--bot);
-      border-color: #dae2ff;
+    .system-message {
+      background: var(--message-bot);
+      border-bottom-left-radius: 4px;
+      color: var(--text-main);
     }
 
-    .message.user {
-      align-self: flex-end;
-      background: var(--user);
+    .user-message {
+      background: var(--message-user);
       color: white;
+      border-bottom-right-radius: 4px;
     }
 
-    .message.error {
-      align-self: flex-start;
-      border-color: #fed7d7;
-      background: #fff5f5;
-      color: #742a2a;
+    .message-meta {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-left: 0.25rem;
+      margin-right: 0.25rem;
     }
 
-    .meta {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-top: 0.4rem;
+    .message-time {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 500;
     }
 
-    .sources {
-      margin-top: 0.6rem;
-      padding-top: 0.6rem;
-      border-top: 1px dashed #c6d2f5;
-      font-size: 0.82rem;
-      color: #324173;
+    /* Feedback Buttons */
+    .feedback-btns {
+      display: flex;
+      gap: 0.4rem;
     }
 
-    .sources ul {
-      margin: 0.4rem 0 0;
-      padding-left: 1rem;
+    .feedback-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 0.1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.2s ease;
     }
 
-    .composer {
-      padding: 0.9rem;
-      border-top: 1px solid var(--border);
-      background: #fff;
-      display: grid;
-      gap: 0.6rem;
+    .feedback-btn:hover {
+      color: var(--primary);
     }
 
-    .input-row {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 0.6rem;
+    .feedback-btn.active-like {
+      color: #10b981;
+      /* green */
     }
 
-    textarea {
-      resize: vertical;
-      min-height: 48px;
-      max-height: 160px;
+    .feedback-btn.active-dislike {
+      color: #ef4444;
+      /* red */
+    }
+
+    .feedback-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Typing Indicator */
+    .typing-indicator-wrapper {
+      display: none;
+      /* hidden by default */
+      flex-direction: column;
+      gap: 0.25rem;
+      align-items: flex-start;
+    }
+
+    .typing-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0.85rem 1.1rem;
+      background: var(--message-bot);
+      border-radius: 16px;
+      border-bottom-left-radius: 4px;
+      color: var(--text-main);
+      font-size: 0.95rem;
+    }
+
+    .typing-dots {
+      display: flex;
+      gap: 4px;
+      margin-left: 2px;
+    }
+
+    .typing-dot {
+      width: 5px;
+      height: 5px;
+      background-color: var(--text-muted);
+      border-radius: 50%;
+      animation: typing 1.4s infinite ease-in-out both;
+    }
+
+    .typing-dot:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+
+    .typing-dot:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+
+    @keyframes typing {
+
+      0%,
+      80%,
+      100% {
+        transform: scale(0);
+        opacity: 0.3;
+      }
+
+      40% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* Footer */
+    .widget-footer {
+      padding: 1rem 1.25rem;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .input-container {
+      flex: 1;
+      position: relative;
+    }
+
+    #widget-input {
       width: 100%;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 0.75rem 0.85rem;
-      font: inherit;
-      color: inherit;
+      background: #ffffff;
+      border: 1px solid var(--primary);
+      /* purple border mapped from screenshot */
+      border-radius: 9999px;
+      /* Pill shape */
+      padding: 0.75rem 1.25rem;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.95rem;
+      outline: none;
+      transition: all 0.2s ease;
+      box-sizing: border-box;
     }
 
-    textarea:focus {
-      outline: 2px solid rgba(62, 99, 221, 0.25);
-      border-color: var(--primary);
+    #widget-input::placeholder {
+      color: var(--text-muted);
     }
 
-    button {
-      border: 0;
-      border-radius: 12px;
+    #widget-input:focus {
+      box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.15);
+    }
+
+    .interact-btn {
       background: var(--primary);
       color: white;
-      font-weight: 600;
-      padding: 0 1rem;
-      cursor: pointer;
-      min-width: 100px;
-    }
-
-    button:hover { background: var(--primary-strong); }
-
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-
-    .controls {
+      border: none;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      flex-shrink: 0;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      gap: 0.6rem;
-      flex-wrap: wrap;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
     }
 
-    .linkish {
-      background: transparent;
-      color: var(--primary);
-      min-width: auto;
-      padding: 0;
-      font-weight: 500;
-      text-decoration: underline;
-      text-underline-offset: 2px;
+    .interact-btn:hover {
+      transform: scale(1.05);
+      background: #6d28d9;
     }
 
-    .hint {
-      color: var(--muted);
-      font-size: 0.8rem;
-    }
-
-    @media (max-width: 680px) {
-      .app { min-height: 95vh; border-radius: 14px; }
-      .message { max-width: 92%; }
-      .input-row { grid-template-columns: 1fr; }
-      button { min-height: 44px; }
+    .interact-btn svg {
+      margin-left: -2px;
+      /* optical alignment for paper plane */
+      margin-top: 1px;
+      width: 20px;
+      height: 20px;
     }
   </style>
 </head>
+
 <body>
-  <main class="app" aria-label="AI College Assistant chat">
-    <header class="header">
-      <div>
-        <h1 class="title">🎓 AI College Assistant</h1>
-        <p class="subtitle">Reliable chat UI aligned with your FastAPI routes.</p>
-      </div>
-      <div id="status" class="status">Idle</div>
-    </header>
 
-    <section id="messages" class="messages" aria-live="polite" aria-label="Conversation"></section>
+  <!-- Widget Container -->
+  <div id="ai-widget-container" class="widget-visible">
+    <div class="widget-header">
+      <div class="widget-avatar">
+        🤖
+      </div>
+      <div class="widget-title">
+        AI Assistant
+      </div>
+    </div>
 
-    <section class="composer">
-      <div class="input-row">
-        <textarea id="messageInput" placeholder="Ask about admissions, notices, events, or documents..." aria-label="Type your question"></textarea>
-        <button id="sendButton" type="button">Send</button>
+    <div class="widget-body">
+      <!-- Initial User Greeting -->
+      <div class="message-wrapper bot">
+        <div class="message system-message">
+          Hello! 👋 I'm your AI assistant. How can I help you today?
+        </div>
+        <div class="message-meta">
+          <span class="message-time">AI • <span class="time-stamp"></span></span>
+          <div class="feedback-btns" style="display: none;"></div> <!-- Hidden on greeting usually, but placeholder -->
+        </div>
       </div>
-      <div class="controls">
-        <div class="hint">Enter to send • Shift+Enter for newline.</div>
-        <button id="clearButton" class="linkish" type="button">Clear conversation</button>
+
+      <!-- Default Typing Indicator -->
+      <div class="typing-indicator-wrapper bot" id="typing-indicator">
+        <div class="typing-indicator">
+          Typing
+          <div class="typing-dots">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+          </div>
+        </div>
       </div>
-    </section>
-  </main>
+    </div>
+
+    <div class="widget-footer">
+      <div class="input-container">
+        <input type="text" placeholder="tell me need..." id="widget-input">
+      </div>
+      <button id="widget-send-btn" class="interact-btn" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+          stroke-linejoin="round">
+          <line x1="22" y1="2" x2="11" y2="13"></line>
+          <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Toggle Button -->
+  <button id="widget-toggle-btn" aria-label="Toggle Assistant">
+    AI
+  </button>
 
   <script>
-    const API_BASE = "http://127.0.0.1:8000";
-    const STORAGE_KEY = "ai_college_assistant_chat_v1";
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('widget-toggle-btn');
+      const widgetContainer = document.getElementById('ai-widget-container');
+      const sendBtn = document.getElementById('widget-send-btn');
+      const widgetInput = document.getElementById('widget-input');
+      const widgetBody = document.querySelector('.widget-body');
+      const typingIndicator = document.getElementById('typing-indicator');
 
-    const elements = {
-      messages: document.getElementById("messages"),
-      status: document.getElementById("status"),
-      input: document.getElementById("messageInput"),
-      sendButton: document.getElementById("sendButton"),
-      clearButton: document.getElementById("clearButton"),
-    };
+      let messageIdCounter = 1;
 
-    const state = {
-      messages: [],
-      pendingController: null,
-      isSending: false,
-    };
-
-    function setStatus(label) {
-      elements.status.textContent = label;
-    }
-
-    function formatTime(value) {
-      return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    }
-
-    function sanitizeToText(value) {
-      if (value === null || value === undefined) return "";
-      return String(value);
-    }
-
-    function normalizeSources(sources) {
-      if (!Array.isArray(sources)) return [];
-      return sources.map((source) => {
-        if (typeof source === "string") return source;
-        if (source && typeof source === "object") {
-          const keys = Object.keys(source);
-          if (!keys.length) return "{}";
-          const compact = keys.slice(0, 3).map((key) => `${key}: ${source[key]}`).join(" | ");
-          return compact;
-        }
-        return String(source);
-      });
-    }
-
-    function renderMessage(message) {
-      const wrapper = document.createElement("article");
-      wrapper.className = `message ${message.role} ${message.error ? "error" : ""}`;
-      wrapper.textContent = sanitizeToText(message.text);
-
-      const meta = document.createElement("div");
-      meta.className = "meta";
-      meta.textContent = `${message.role === "user" ? "You" : "Assistant"} • ${formatTime(message.timestamp)}`;
-      wrapper.appendChild(meta);
-
-      if (message.sources?.length) {
-        const sourceBlock = document.createElement("section");
-        sourceBlock.className = "sources";
-        sourceBlock.innerHTML = "<strong>Sources</strong>";
-
-        const list = document.createElement("ul");
-        message.sources.forEach((entry) => {
-          const item = document.createElement("li");
-          item.textContent = entry;
-          list.appendChild(item);
-        });
-
-        sourceBlock.appendChild(list);
-        wrapper.appendChild(sourceBlock);
-      }
-
-      elements.messages.appendChild(wrapper);
-      elements.messages.scrollTop = elements.messages.scrollHeight;
-    }
-
-    function renderAll() {
-      elements.messages.innerHTML = "";
-      state.messages.forEach(renderMessage);
-    }
-
-    function persist() {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.messages));
-    }
-
-    function addMessage(partial) {
-      const message = {
-        role: partial.role,
-        text: sanitizeToText(partial.text),
-        timestamp: partial.timestamp || new Date().toISOString(),
-        sources: partial.sources || [],
-        error: Boolean(partial.error),
+      // Time helper
+      const getFormattedTime = () => {
+        const now = new Date();
+        return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       };
-      state.messages.push(message);
-      renderMessage(message);
-      persist();
-    }
 
-    function setSending(sending) {
-      state.isSending = sending;
-      elements.sendButton.disabled = sending;
-      elements.input.disabled = sending;
-      setStatus(sending ? "Waiting for response..." : "Idle");
-    }
+      // Set initial times
+      document.querySelectorAll('.time-stamp').forEach(el => el.textContent = getFormattedTime());
 
-    async function sendMessage() {
-      if (state.isSending) return;
-      const text = elements.input.value.trim();
-      if (!text) return;
+      let isWidgetOpen = true; // Open by default for display
 
-      addMessage({ role: "user", text });
-      elements.input.value = "";
+      toggleBtn.addEventListener('click', () => {
+        isWidgetOpen = !isWidgetOpen;
+        if (isWidgetOpen) {
+          widgetContainer.classList.remove('widget-hidden');
+          widgetContainer.classList.add('widget-visible');
+          setTimeout(() => widgetInput.focus(), 300);
+        } else {
+          widgetContainer.classList.remove('widget-visible');
+          widgetContainer.classList.add('widget-hidden');
+        }
+      });
 
-      const controller = new AbortController();
-      state.pendingController = controller;
-      setSending(true);
+      // Handle logging feedback to API
+      const handleFeedback = async (e, messageId, type) => {
+        const btn = e.currentTarget;
+        const siblings = btn.parentElement.querySelectorAll('.feedback-btn');
 
-      try {
-        const response = await fetch(`${API_BASE}/chat`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ message: text, timestamp: new Date().toISOString() }),
-          signal: controller.signal,
+        // reset styling for sibs
+        siblings.forEach(s => {
+          s.classList.remove('active-like');
+          s.classList.remove('active-dislike');
         });
 
-        let payload = null;
+        // add styling for current
+        if (type === 'like') btn.classList.add('active-like');
+        if (type === 'dislike') btn.classList.add('active-dislike');
+
+        console.log(`[Feedback Registered] Type: ${type}, Message ID: ${messageId}, Timestamp: ${new Date().toISOString()}`);
+
         try {
-          payload = await response.json();
-        } catch {
-          payload = null;
+          await fetch('http://localhost:8001/feedback', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              feedbackType: type,
+              timestamp: new Date().toISOString()
+            })
+          });
+        } catch (error) {
+          console.error('Error sending feedback:', error);
         }
+      };
 
-        if (!response.ok) {
-          throw new Error(payload?.detail || `Request failed with status ${response.status}`);
+      const sendMessage = async () => {
+        const text = widgetInput.value.trim();
+        if (!text) return;
+
+        // Add user message
+        const userWrapper = document.createElement('div');
+        userWrapper.className = 'message-wrapper user';
+
+        const userMsg = document.createElement('div');
+        userMsg.className = 'message user-message';
+        userMsg.textContent = text;
+
+        const userMeta = document.createElement('div');
+        userMeta.className = 'message-meta';
+
+        const userTime = document.createElement('span');
+        userTime.className = 'message-time';
+        userTime.textContent = 'You • ' + getFormattedTime();
+
+        userMeta.appendChild(userTime);
+        userWrapper.appendChild(userMsg);
+        userWrapper.appendChild(userMeta);
+        widgetBody.appendChild(userWrapper);
+
+        widgetInput.value = '';
+        widgetBody.scrollTop = widgetBody.scrollHeight;
+
+        /* ----- Show Typing Indicator while waiting for API ----- */
+        widgetBody.appendChild(typingIndicator); // Move indicator to bottom
+        typingIndicator.style.display = 'flex';
+        widgetBody.scrollTop = widgetBody.scrollHeight;
+
+        try {
+          const response = await fetch('http://localhost:8001/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: text,
+              timestamp: new Date().toISOString()
+            })
+          });
+
+          if (!response.ok) {
+            throw new Error(`Server error: ${response.status}`);
+          }
+
+          const data = await response.json();
+
+          // Hide typing indicator when done thinking
+          typingIndicator.style.display = 'none';
+
+          const botWrapper = document.createElement('div');
+          botWrapper.className = 'message-wrapper bot';
+
+          const botMsg = document.createElement('div');
+          botMsg.className = 'message system-message';
+          botMsg.textContent = data.response;
+
+          const botMeta = document.createElement('div');
+          botMeta.className = 'message-meta';
+
+          const botTime = document.createElement('span');
+          botTime.className = 'message-time';
+          botTime.textContent = 'AI • ' + getFormattedTime();
+
+          // Create Feedback Buttons
+          const msgId = messageIdCounter++;
+          const feedbackDiv = document.createElement('div');
+          feedbackDiv.className = 'feedback-btns';
+
+          // Thumbs Up
+          const likeBtn = document.createElement('button');
+          likeBtn.className = 'feedback-btn';
+          likeBtn.title = 'Helpful';
+          likeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"></path></svg>';
+          likeBtn.onclick = (e) => handleFeedback(e, msgId, 'like');
+
+          // Thumbs Down
+          const dislikeBtn = document.createElement('button');
+          dislikeBtn.className = 'feedback-btn';
+          dislikeBtn.title = 'Not helpful';
+          dislikeBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"></path></svg>';
+          dislikeBtn.onclick = (e) => handleFeedback(e, msgId, 'dislike');
+
+          feedbackDiv.appendChild(likeBtn);
+          feedbackDiv.appendChild(dislikeBtn);
+          botMeta.appendChild(botTime);
+          botMeta.appendChild(feedbackDiv);
+
+          botWrapper.appendChild(botMsg);
+          botWrapper.appendChild(botMeta);
+
+          // Add bot message
+          widgetBody.appendChild(botWrapper);
+
+          // Put typing indicator invisibly at the end so it's ready for next message
+          widgetBody.appendChild(typingIndicator);
+
+          widgetBody.scrollTop = widgetBody.scrollHeight;
+        } catch (error) {
+          console.error('Chat API Error:', error);
+          typingIndicator.style.display = 'none';
+
+          const errorWrapper = document.createElement('div');
+          errorWrapper.className = 'message-wrapper bot';
+          const errorMsg = document.createElement('div');
+          errorMsg.className = 'message system-message';
+          errorMsg.style.color = '#ef4444';
+          errorMsg.textContent = "Could not complete request: " + error.message;
+          errorWrapper.appendChild(errorMsg);
+          widgetBody.appendChild(errorWrapper);
+          widgetBody.appendChild(typingIndicator);
+          widgetBody.scrollTop = widgetBody.scrollHeight;
         }
+      };
 
-        addMessage({
-          role: "bot",
-          text: payload?.response || "No response body returned.",
-          sources: normalizeSources(payload?.sources),
-        });
-      } catch (error) {
-        addMessage({
-          role: "bot",
-          text: `Could not complete request: ${error?.message || "Unknown error"}`,
-          error: true,
-        });
-      } finally {
-        state.pendingController = null;
-        setSending(false);
-        elements.input.focus();
-      }
-    }
-
-    function clearConversation() {
-      if (state.isSending && state.pendingController) {
-        state.pendingController.abort();
-      }
-      state.messages = [];
-      persist();
-      renderAll();
-      addMessage({ role: "bot", text: "Conversation cleared. Ask a new question anytime." });
-    }
-
-    function restoreConversation() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) {
-          addMessage({ role: "bot", text: "Hi! I can help with admissions, events, notices, and college documents." });
-          return;
-        }
-
-        const parsed = JSON.parse(raw);
-        if (!Array.isArray(parsed)) throw new Error("Invalid history format.");
-
-        state.messages = parsed.filter((entry) => entry && entry.role && entry.text).slice(-100);
-        renderAll();
-
-        if (!state.messages.length) {
-          addMessage({ role: "bot", text: "Hi! I can help with admissions, events, notices, and college documents." });
-        }
-      } catch {
-        localStorage.removeItem(STORAGE_KEY);
-        state.messages = [];
-        renderAll();
-        addMessage({ role: "bot", text: "History reset due to invalid saved data." });
-      }
-    }
-
-    elements.sendButton.addEventListener("click", sendMessage);
-    elements.clearButton.addEventListener("click", clearConversation);
-    elements.input.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        sendMessage();
-      }
+      sendBtn.addEventListener('click', sendMessage);
+      widgetInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+      });
     });
-
-    restoreConversation();
-    elements.input.focus();
   </script>
 </body>
 
