@@ -29,6 +29,11 @@ ADMISSION_INFO: Dict[str, str] = {
     ),
 }
 
+ADMISSION_LINKS: Dict[str, str] = {
+    "apply_form": "https://college.example.edu/admissions/apply",
+    "admission_portal": "https://college.example.edu/admissions",
+}
+
 
 def run(query: str) -> str:
     """Returns admission-related information as plain text."""
@@ -46,8 +51,15 @@ def run(query: str) -> str:
         return ADMISSION_INFO["documents"]
     if any(k in text for k in {"date", "deadline", "schedule", "last date"}):
         return ADMISSION_INFO["dates"]
+    if any(k in text for k in {"apply", "application", "apply form", "admission form", "link"}):
+        return (
+            "You can apply online using the official admission form: "
+            f"{ADMISSION_LINKS['apply_form']} . "
+            "For complete admission updates, visit: "
+            f"{ADMISSION_LINKS['admission_portal']}"
+        )
 
     return (
         "For admissions, you can ask about eligibility, fees, cutoffs, entrance exams, "
-        "required documents, and important deadlines."
+        "required documents, important deadlines, and the direct application form link."
     )

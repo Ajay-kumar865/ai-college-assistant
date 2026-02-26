@@ -41,8 +41,9 @@ def run():
     with OUTPUT_FILE.open("a", encoding="utf-8") as f:
 
         for item in items:
+            item_url = item if isinstance(item, str) else item.get("url", "")
 
-            if item in processed_urls:
+            if item_url in processed_urls:
                 continue
 
             try:
@@ -63,11 +64,11 @@ def run():
 
                 f.write(json.dumps(record, ensure_ascii=False) + "\n")
 
-                processed_urls.add(item)
+                processed_urls.add(item_url)
                 save_processed(processed_urls)
 
             except Exception as e:
-                print(f"Error ingesting {item}: {e}")
+                print(f"Error ingesting {item_url}: {e}")
                 continue
 
 
