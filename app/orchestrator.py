@@ -15,21 +15,32 @@ prompt_builder = Prompt_Builder()
 llm_router = build_llm_router()  # ✅ correct
 
 
+from app.constant import (
+    INTENT_GENERAL_QA,
+    INTENT_ADMISSION,
+    INTENT_HOSTEL,
+    INTENT_DOCUMENT,
+    INTENT_EVENT,
+    INTENT_ADMIN,
+    INTENT_UNKNOWN,
+)
+
 # ---- intent routing ----
 TOOL_INTENTS = {
-    "admission",
-    "hostel",
-    "event",
-    "notice",
-    "document",
+    INTENT_ADMISSION,
+    INTENT_HOSTEL,
+    INTENT_EVENT,
+    INTENT_DOCUMENT,
 }
 
-# FIXED: Removed general_qa from RAG_INTENTS - it doesn't need context retrieval
+# We include general_qa in RAG_INTENTS because many university questions (like "Who is the Vice Chancellor?") 
+# do not match specific keywords and fall back to general_qa.
 RAG_INTENTS = {
-    "admission",
-    "hostel",
-    "event",
-    "notice",
+    INTENT_ADMISSION,
+    INTENT_HOSTEL,
+    INTENT_EVENT,
+    INTENT_DOCUMENT,
+    INTENT_GENERAL_QA,
 }
 
 
@@ -42,9 +53,7 @@ class Response:
     citations: list[str] | None = None
 
 
-# FIXED: Expanded fast intents - these should NEVER trigger RAG
 FAST_INTENTS = {
-    "general_qa",
     "chitchat",
 }
 
