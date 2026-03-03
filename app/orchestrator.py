@@ -33,14 +33,14 @@ TOOL_INTENTS = {
     INTENT_DOCUMENT,
 }
 
-# We include general_qa in RAG_INTENTS because many university questions (like "Who is the Vice Chancellor?") 
-# do not match specific keywords and fall back to general_qa.
+# Queries frequently classified as general_qa can still be university-specific
+# (e.g., "Who is the vice chancellor?"). Keep RAG enabled for this intent.
 RAG_INTENTS = {
-    INTENT_ADMISSION,
-    INTENT_HOSTEL,
-    INTENT_EVENT,
-    INTENT_DOCUMENT,
-    INTENT_GENERAL_QA,
+    "admission",
+    "hostel",
+    "event",
+    "notice",
+    "general_qa",
 }
 
 
@@ -53,6 +53,7 @@ class Response:
     citations: list[str] | None = None
 
 
+# Fast intents are lightweight conversational intents that should skip RAG.
 FAST_INTENTS = {
     "chitchat",
 }

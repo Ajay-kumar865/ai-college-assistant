@@ -11,6 +11,9 @@ class Prompt_Builder:
         history: list[dict] = None,
     ) -> str:
         sections = []
+        if intent == "chitchat":
+            context = ""
+            tool_output = ""
 
         # System role
         system_header = """You are an AI College Assistant for a university.
