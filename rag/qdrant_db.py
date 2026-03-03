@@ -68,6 +68,13 @@ class QdrantDB:
     # UPSERT DOCUMENTS
     # ---------------------------
     def upsert_documents(self, docs: list, batch_size: int = 64):
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            separators=["\n\n", "\n", " ", ""]
+        )
 
         total = len(docs)
         logger.info(f"Uploading {total} documents to Qdrant")
@@ -75,38 +82,49 @@ class QdrantDB:
         for i in range(0, total, batch_size):
             batch = docs[i:i + batch_size]
 
-            texts = []
-            for d in batch:
-                discovered_links = d.get("discovered_links", [])
-                links_text = " ".join(discovered_links) if discovered_links else ""
-                texts.append(f"{d['text']} {links_text}".strip())
-
-            embeddings = self.embedder.encode(texts)
-
             points = []
+            
+            for doc in batch:
+                discovered_links = doc.get("discovered_links", [])
+                links_text = " ".join(discovered_links) if discovered_links else ""
+                
+                # Create the full text to be split
+                full_text = f"{doc['text']} {links_text}".strip()
+                
+                # Split large documents into chunks
+                chunks = splitter.split_text(full_text)
+                
+                if not chunks:
+                    continue
+                    
+                embeddings = self.embedder.encode(chunks)
+                
+                for chunk_text, vec in zip(chunks, embeddings):
+                    points.append({
+                        "id": str(uuid.uuid4()),
+                        "vector": vec.tolist(),
+                        "payload": {
+                            "text": (
+                                chunk_text
+                                + (
+                                    "\n\nRelated links: " + ", ".join(doc.get("discovered_links", []))
+                                    if doc.get("discovered_links")
+                                    else ""
+                                )
+                            ),
+                            "url": doc.get("url", ""),
+                            "discovered_links": doc.get("discovered_links", []),
+                        }
+                    })
 
-            for doc, vec in zip(batch, embeddings):
-                points.append({
-                    "id": str(uuid.uuid4()),
-                    "vector": vec.tolist(),
-                    "payload": {
-                        "text": (
-                            doc["text"]
-                            + (
-                                "\n\nRelated links: " + ", ".join(doc.get("discovered_links", []))
-                                if doc.get("discovered_links")
-                                else ""
-                            )
-                        ),
-                        "url": doc.get("url", ""),
-                        "discovered_links": doc.get("discovered_links", []),
-                    }
-                })
-
-            self.client.upsert(
-                collection_name=_COLLECTION_NAME,
-                points=points
-            )
+            # Sub-batch the points so we don't exceed Qdrant's 33MB payload limit
+            if points:
+                for j in range(0, len(points), 100):
+                    sub_points = points[j:j + 100]
+                    self.client.upsert(
+                        collection_name=_COLLECTION_NAME,
+                        points=sub_points
+                    )
 
             logger.info(f"Uploaded batch {i + len(batch)} / {total}")
 

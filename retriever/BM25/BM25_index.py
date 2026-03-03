@@ -31,6 +31,28 @@ class BM25Index:
         if not self.documents:
             raise ValueError("No documents loaded for BM25 indexing")
 
+        from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=1000,
+            chunk_overlap=200,
+            separators=["\n\n", "\n", " ", ""]
+        )
+
+        chunked_docs = []
+        chunked_names = []
+
+        for doc, name in zip(self.documents, self.doc_names):
+            chunks = splitter.split_text(doc)
+            for c in chunks:
+                chunked_docs.append(c)
+                # Keep track of the source file for the chunk
+                chunked_names.append(name)
+
+        # Replace original large docs with chunked versions
+        self.documents = chunked_docs
+        self.doc_names = chunked_names
+
         tokenized_docs = [self._tokenize(doc) for doc in self.documents]
         self.bm25 = BM25Okapi(tokenized_docs)
 

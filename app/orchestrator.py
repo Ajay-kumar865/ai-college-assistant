@@ -49,7 +49,7 @@ FAST_INTENTS = {
 }
 
 
-def handle_query(user_query: str) -> Response:
+def handle_query(user_query: str, history: list[dict] = None) -> Response:
     intent = "general_qa"
     confidence = 0.0
     tool_output = ""
@@ -116,6 +116,7 @@ def handle_query(user_query: str) -> Response:
             context=context,
             intent=intent,
             tool_output=tool_output,
+            history=history,
         )
 
         # 5. LLM generation
@@ -141,12 +142,18 @@ def handle_query(user_query: str) -> Response:
 
     # === SUPER SAFE LOGGING ===
     try:
-        from logs.db_logger import log_query
+        from logs.db_logger import log_query, log_response
         log_query({
             "query": user_query,
             "intent": intent,
             "confidence": confidence,
             "answer_length": len(answer_text),
+        })
+        log_response({
+            "query": user_query,
+            "response": answer_text,
+            "intent": intent,
+            "citations": citations
         })
     except Exception as log_e:
         logger.warning(f"Logging skipped: {log_e}")

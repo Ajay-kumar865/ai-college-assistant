@@ -9,6 +9,15 @@ import json
 import logging
 
 # ---- internal imports ----
+import sys
+import io
+
+# Force UTF-8 for Windows environments to avoid emoji encode errors
+if sys.stdout.encoding.lower() != 'utf-8':
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+if sys.stderr.encoding.lower() != 'utf-8':
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
 from app.orchestrator import handle_query
 from logs.log_setup import Log_Setup
 
@@ -28,6 +37,8 @@ app.add_middleware(
 logger_setup = Log_Setup()
 logger_setup.setup_logging()
 feedback_logger = logger_setup.feedback_logger
+query_logger = logging.getLogger("queries")
+response_logger = logging.getLogger("responses")
 
 # ---- state (temporary) ----
 LAST_CHAT = {}
@@ -41,6 +52,7 @@ router = APIRouter()
 # =========================
 class ChatRequest(BaseModel):
     message: str
+    history: List[dict] = Field(default_factory=list)
     timestamp: Optional[str] = None
 
 
@@ -82,10 +94,14 @@ def serialize_citations(citations) -> list:
 @router.post("/chat", response_model=ChatResponse)
 async def chat(req: ChatRequest):
     try:
-        result = await run_in_threadpool(handle_query, req.message)
+        result = await run_in_threadpool(handle_query, req.message, req.history)
 
         LAST_CHAT["query"] = req.message
         LAST_CHAT["response"] = result.text
+
+        # Log query and response to local text files
+        query_logger.info(req.message)
+        response_logger.info(result.text)
 
         return {
             "response": result.text,

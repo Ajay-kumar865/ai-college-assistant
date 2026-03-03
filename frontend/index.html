@@ -440,6 +440,13 @@
 
       let isWidgetOpen = true; // Open by default for display
 
+      // Load history from session storage
+      let chatHistory = JSON.parse(sessionStorage.getItem('chatHistory')) || [];
+
+      const saveHistory = () => {
+        sessionStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+      };
+
       toggleBtn.addEventListener('click', () => {
         isWidgetOpen = !isWidgetOpen;
         if (isWidgetOpen) {
@@ -505,6 +512,54 @@
         }
       };
 
+      // Render historical messages on load
+      if (chatHistory.length > 0) {
+        // Remove the default greeting so it's not duplicated
+        const defaultBotMsg = document.querySelector('.message-wrapper.bot');
+        if (defaultBotMsg && defaultBotMsg.textContent.includes('Hello!')) {
+          defaultBotMsg.remove();
+        }
+
+        chatHistory.forEach(msg => {
+          if (msg.role === 'user') {
+            const userWrapper = document.createElement('div');
+            userWrapper.className = 'message-wrapper user';
+            const userMsg = document.createElement('div');
+            userMsg.className = 'message user-message';
+            userMsg.textContent = msg.content;
+            const userMeta = document.createElement('div');
+            userMeta.className = 'message-meta';
+            const userTime = document.createElement('span');
+            userTime.className = 'message-time';
+            userTime.textContent = 'You • ' + (msg.time || getFormattedTime());
+            userMeta.appendChild(userTime);
+            userWrapper.appendChild(userMsg);
+            userWrapper.appendChild(userMeta);
+            widgetBody.insertBefore(userWrapper, typingIndicator);
+          } else {
+            const botWrapper = document.createElement('div');
+            botWrapper.className = 'message-wrapper bot';
+            const botMsg = document.createElement('div');
+            botMsg.className = 'message system-message';
+            botMsg.textContent = msg.content;
+            const botMeta = document.createElement('div');
+            botMeta.className = 'message-meta';
+            const botTime = document.createElement('span');
+            botTime.className = 'message-time';
+            botTime.textContent = 'AI • ' + (msg.time || getFormattedTime());
+
+            // Simplified feedback buttons for historical messages (skipped for brevity)
+            botMeta.appendChild(botTime);
+            botWrapper.appendChild(botMsg);
+            botWrapper.appendChild(botMeta);
+            widgetBody.insertBefore(botWrapper, typingIndicator);
+
+            if (msg.id >= messageIdCounter) messageIdCounter = msg.id + 1;
+          }
+        });
+        widgetBody.scrollTop = widgetBody.scrollHeight;
+      }
+
       const sendMessage = async () => {
         const text = widgetInput.value.trim();
         if (!text) return;
@@ -520,14 +575,19 @@
         const userMeta = document.createElement('div');
         userMeta.className = 'message-meta';
 
+        const timeNow = getFormattedTime();
         const userTime = document.createElement('span');
         userTime.className = 'message-time';
-        userTime.textContent = 'You • ' + getFormattedTime();
+        userTime.textContent = 'You • ' + timeNow;
 
         userMeta.appendChild(userTime);
         userWrapper.appendChild(userMsg);
         userWrapper.appendChild(userMeta);
         widgetBody.appendChild(userWrapper);
+
+        // Update state and storage
+        chatHistory.push({ role: 'user', content: text, time: timeNow });
+        saveHistory();
 
         widgetInput.value = '';
         widgetBody.scrollTop = widgetBody.scrollHeight;
@@ -543,6 +603,7 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               message: text,
+              history: chatHistory.slice(0, -1),
               timestamp: new Date().toISOString()
             })
           });
@@ -566,12 +627,17 @@
           const botMeta = document.createElement('div');
           botMeta.className = 'message-meta';
 
+          const botTimeNow = getFormattedTime();
           const botTime = document.createElement('span');
           botTime.className = 'message-time';
-          botTime.textContent = 'AI • ' + getFormattedTime();
+          botTime.textContent = 'AI • ' + botTimeNow;
 
           // Create Feedback & Action Buttons
           const msgId = messageIdCounter++;
+
+          // Update state and storage
+          chatHistory.push({ role: 'assistant', content: data.response, time: botTimeNow, id: msgId });
+          saveHistory();
           const feedbackDiv = document.createElement('div');
           feedbackDiv.className = 'feedback-btns';
 

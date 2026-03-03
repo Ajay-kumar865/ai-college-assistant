@@ -8,6 +8,7 @@ class Prompt_Builder:
         context: str,
         intent: str,
         tool_output: str = "",
+        history: list[dict] = None,
     ) -> str:
         sections = []
         if intent == "general_qa":
@@ -29,7 +30,8 @@ Rules:
 - Only use sources when they are explicitly provided.
 - Do NOT mention missing context unless explicitly asked.
 - Be concise, professional, and helpful.
--Inlcude emoji's to your answers.
+
+- by default use latest year data available.
 
 Identity:
 - If asked “who are you?”, respond that you are a university AI assistant.
@@ -46,6 +48,14 @@ Identity:
         # RAG context (supporting information)
         if context:
             sections.append("### REFERENCE INFORMATION\n" f"{context}")
+
+        # Conversation History
+        if history:
+            history_text = "### PREVIOUS CONVERSATION\n"
+            for msg in history:
+                role = "User" if msg.get("role") == "user" else "Assistant"
+                history_text += f"{role}: {msg.get('content', '')}\n"
+            sections.append(history_text)
 
         # User question
         sections.append("### USER QUESTION\n" f"{user_query}")
