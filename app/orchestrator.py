@@ -24,12 +24,14 @@ TOOL_INTENTS = {
     "document",
 }
 
-# FIXED: Removed general_qa from RAG_INTENTS - it doesn't need context retrieval
+# Queries frequently classified as general_qa can still be university-specific
+# (e.g., "Who is the vice chancellor?"). Keep RAG enabled for this intent.
 RAG_INTENTS = {
     "admission",
     "hostel",
     "event",
     "notice",
+    "general_qa",
 }
 
 
@@ -42,9 +44,8 @@ class Response:
     citations: list[str] | None = None
 
 
-# FIXED: Expanded fast intents - these should NEVER trigger RAG
+# Fast intents are lightweight conversational intents that should skip RAG.
 FAST_INTENTS = {
-    "general_qa",
     "chitchat",
 }
 
