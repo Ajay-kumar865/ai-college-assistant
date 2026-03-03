@@ -11,6 +11,8 @@ class Prompt_Builder:
         history: list[dict] = None,
     ) -> str:
         sections = []
+        if intent == "general_qa":
+            tool_output = ""
         if intent == "chitchat":
             context = ""
             tool_output = ""
