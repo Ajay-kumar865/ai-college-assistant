@@ -55,10 +55,18 @@ class GroqProvider:
             response.raise_for_status()
 
             data = response.json()
+            text = (
+                data.get("choices", [{}])[0]
+                .get("message", {})
+                .get("content", "")
+            ).strip()
+            if not text:
+                raise LLMTransientError("Groq returned an empty response")
+
             return LLMResponse(
                 provider="groq",
                 model=data.get("model", MODEL),
-                text=data["choices"][0]["message"]["content"],
+                text=text,
             )
 
         except LLMQuotaExceeded:
