@@ -22,10 +22,16 @@ class GeminiProvider:
                 contents=prompt,
             )
 
+            text = (getattr(response, "text", None) or "").strip()
+            if not text:
+                # Gemini can return a candidate without text (e.g., safety-filtered/empty).
+                # Treat this as a transient provider failure so router can cleanly fallback.
+                raise LLMTransientError("Gemini returned an empty response")
+
             return LLMResponse(
                 provider="gemini",
                 model="gemini-2.5-flash",
-                text=response.text,
+                text=text,
             )
 
         except errors.APIError as e:
@@ -41,4 +47,3 @@ class GeminiProvider:
         except Exception as e:
             # Network or parsing issues
             raise LLMTransientError(f"Gemini unexpected error: {e}") from e
-
