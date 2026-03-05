@@ -1,6 +1,5 @@
 # llm/prompt_templates.py
 
-
 class Prompt_Builder:
     def build_prompt(
         self,
@@ -10,69 +9,115 @@ class Prompt_Builder:
         tool_output: str = "",
         history: list[dict] = None,
     ) -> str:
+
         sections = []
+
+        # Intent adjustments
         if intent == "general_qa":
             tool_output = ""
+
         if intent == "chitchat":
             context = ""
             tool_output = ""
 
-        # System role
-        system_header = """You are an AI College Assistant for a university.
+        # =========================
+        # SYSTEM ROLE
+        # =========================
+        system_header = """
+You are an AI College Assistant for a university.
 
-Your role:
-- Answer questions clearly, confidently, and directly.
-- when university name not mentioned you will assume Guru jambheswar University as default university.
-- You can answer general questions about yourself and common knowledge without documents.
-- You can answer university-related questions using provided context when available.
+Default University:
+Guru Jambheshwar University of Science & Technology (GJUST), Hisar.
 
-Rules:
-- NEVER say “I don’t know” or “I can’t answer” for general questions.
-- If no context is provided, answer from general knowledge.
-- Only use sources when they are explicitly provided.
-- Do NOT mention missing context unless explicitly asked.
-- Be concise, professional, and helpful.
+Your job is to answer university questions accurately using verified data
+and university documents when available.
 
-- by default use latest year data available.
+IMPORTANT RULES:
+
+1. VERIFIED UNIVERSITY DATA has the highest priority.
+2. UNIVERSITY DOCUMENTS are the second priority.
+3. If the answer appears in the documents, you MUST extract it.
+4. Never ignore information that clearly answers the question.
+5. Never fabricate facts about the university.
+6. If information is missing, say:
+
+"This information is not available in the university documents."
+
+General Knowledge:
+You may answer general knowledge questions normally.
 
 Identity:
-- If asked “who are you?”, respond that you are a university AI assistant.
--IF asked "who made you>" respond that you are made by Ajay and lalit verma"
--If asked "what are roll number of your developer" respond with Ajay- 230010130135 lalit - 230010130096
+If asked who you are → say you are a university AI assistant.
+
+Developers:
+Ajay (230010130135)
+Lalit Verma (230010130096)
 """
 
-        # Tool output (highest priority)
+        # =========================
+        # TOOL OUTPUT
+        # =========================
         if tool_output:
             sections.append(
-                "### VERIFIED INFORMATION (from university systems)\n" f"{tool_output}"
+                "### VERIFIED UNIVERSITY DATA (Highest Priority)\n"
+                f"{tool_output}"
             )
 
-        # RAG context (supporting information)
+        # =========================
+        # RAG CONTEXT
+        # =========================
         if context:
-            sections.append("### REFERENCE INFORMATION\n" f"{context}")
+            sections.append(
+                "### UNIVERSITY DOCUMENTS\n"
+                "The following information was retrieved from university records.\n"
+                f"{context}"
+            )
 
-        # Conversation History
+        # =========================
+        # CONVERSATION HISTORY
+        # =========================
         if history:
-            history_text = "### PREVIOUS CONVERSATION\n"
+            history_text = "### CONVERSATION HISTORY\n"
             for msg in history:
                 role = "User" if msg.get("role") == "user" else "Assistant"
-                history_text += f"{role}: {msg.get('content', '')}\n"
+                history_text += f"{role}: {msg.get('content','')}\n"
             sections.append(history_text)
 
-        # User question
-        sections.append("### USER QUESTION\n" f"{user_query}")
-
-        # Final instruction
-        instruction = (
-            "### INSTRUCTIONS\n"
-            "- Use VERIFIED INFORMATION first if available.\n"
-            "- Use REFERENCE INFORMATION to support your answer.\n"
-            "- Do not contradict verified information.\n"
-            "- If the available information is insufficient to answer fully, "
-            "ask a clarifying question.\n"
-            "- Only say 'Sorry, I can’t help in this context.' if no relevant information "
-            "is available at all."
+        # =========================
+        # USER QUESTION
+        # =========================
+        sections.append(
+            "### USER QUESTION\n"
+            f"{user_query}"
         )
+
+        # =========================
+        # RESPONSE PROCESS
+        # =========================
+        instruction = """
+### RESPONSE PROCESS
+
+Before answering, follow this reasoning process:
+
+1. Check VERIFIED UNIVERSITY DATA first.
+2. If the answer is not there, read the UNIVERSITY DOCUMENTS.
+3. Identify the exact sentence that contains the answer.
+4. Extract the information from that sentence.
+5. Provide a concise final answer.
+
+### OUTPUT FORMAT
+
+Evidence:
+<quote the sentence from the documents if used>
+
+Answer:
+<final concise answer>
+
+If no information exists in verified data or documents, respond:
+
+Answer:
+This information is not available in the university documents.
+"""
 
         prompt = system_header + "\n\n" + "\n\n".join(sections) + "\n\n" + instruction
 
