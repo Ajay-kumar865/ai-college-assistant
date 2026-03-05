@@ -1,5 +1,6 @@
 import requests
-from app.config import GOOSE_API_KEYS
+
+from llm.providers.base_exception import LLMTransientError
 
 
 class GooseProvider:
@@ -33,4 +34,7 @@ class GooseProvider:
             )
 
         data = response.json()
-        return data["choices"][0]["text"].strip()
+        text = (data.get("choices", [{}])[0].get("text", "")).strip()
+        if not text:
+            raise LLMTransientError("Goose returned an empty response")
+        return text
