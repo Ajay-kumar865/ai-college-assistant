@@ -1,6 +1,8 @@
 from .key_pool_executor import KeyPoolExecutor
 import logging
 
+from llm.providers.base_exception import LLMTransientError
+
 logger = logging.getLogger("responses")
 
 from app.config import GROQ_API_KEYS, GEMINI_API_KEYS
@@ -24,13 +26,18 @@ class LLMExecutor:
         else:
             raise RuntimeError(f"No key pool registered for provider: {provider_name}")
 
+        # Normalize/validate provider output so frontend never gets empty text.
+        result_text = result.text if hasattr(result, "text") else str(result)
+        if not (result_text or "").strip():
+            raise LLMTransientError(f"{provider_name} returned an empty response")
+
         # ✅ FINAL response logging (single source of truth)
         from logs.db_logger import log_response
 
         log_response(
             {
                 "provider": provider_name,
-                "response": str(result),
+                "response": result_text,
             }
         )
 
