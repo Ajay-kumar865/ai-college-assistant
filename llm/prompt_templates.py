@@ -104,11 +104,11 @@ Before answering, follow this reasoning process:
 3. Identify the exact sentence that contains the answer.
 4. Extract the information from that sentence.
 5. Provide a concise final answer.
+6. if multiple information available for same query answer only the information which is related to latest year.
 
 ### OUTPUT FORMAT
 
-Evidence:
-<quote the sentence from the documents if used>
+
 
 Answer:
 <final concise answer>
