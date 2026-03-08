@@ -43,9 +43,9 @@ def handle_query(user_query: str, history: list[dict] = None) -> Response:
         logger.exception(f"handle_query failed: {e}")
         answer_text = "Sorry, I encountered an error processing your question."
 
-    # === SUPER SAFE LOGGING ===
     try:
         from logs.db_logger import log_query, log_response
+
         log_query({
             "query": user_query,
             "answer_length": len(answer_text),

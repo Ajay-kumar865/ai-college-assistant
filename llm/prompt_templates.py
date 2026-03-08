@@ -6,6 +6,7 @@ class Prompt_Builder:
         self,
         user_query: str,
         history: list[dict] = None,
+        query_variants: list[str] | None = None,
     ) -> str:
 
         sections = []
