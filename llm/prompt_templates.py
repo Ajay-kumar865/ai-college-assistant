@@ -41,12 +41,6 @@ Lalit Verma (230010130096)
                 history_text += f"{role}: {msg.get('content', '')}\n"
             sections.append(history_text)
 
-        if query_variants and len(query_variants) > 1:
-            variants_text = "### QUERY VARIANTS GENERATED FROM USER QUESTION\n"
-            for idx, query in enumerate(query_variants, start=1):
-                variants_text += f"{idx}. {query}\n"
-            sections.append(variants_text)
-
         sections.append(
             "### USER QUESTION\n"
             f"{user_query}"
